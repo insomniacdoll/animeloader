@@ -31,7 +31,8 @@ animeloader 是一个用于订阅动画发布和管理动画下载内容的 Pyth
 
 - **数据库**: SQLite
 - **ORM**: SQLAlchemy
-- **CLI框架**: cmd2
+- **CLI框架**: cmd2 (客户端命令行框架)
+- **界面美化**: rich (客户端命令行交互美化)
 - **HTTP客户端**: requests
 - **RSS解析**: feedparser
 - **任务调度**: APScheduler
@@ -82,9 +83,11 @@ animeloader/
 ├── IFLOW.md              # 项目说明
 ├── DESIGN.md             # 设计文档
 ├── requirements.txt      # 依赖列表
+├── config.yaml           # 默认配置文件（仅用于开发）
 ├── server/               # 服务端代码
 │   ├── __init__.py
 │   ├── main.py           # 服务端入口
+│   ├── config.yaml       # 服务端配置文件（部署时与应用在一起）
 │   ├── models/           # 数据模型
 │   │   ├── __init__.py
 │   │   ├── anime.py      # 动画模型
@@ -350,7 +353,11 @@ GET    /api/links/{id}/downloads    # 获取链接的所有下载任务
 
 ### 5.1 CLI 命令结构
 
-基于 cmd2 框架，提供交互式命令行界面。
+基于 **cmd2** 框架构建命令行架构，提供交互式 Shell 环境，并集成 **rich** 库进行界面美化，支持表格、进度条、彩色输出、语法高亮等丰富的视觉效果。
+
+**技术栈组合说明：**
+- **cmd2**: 负责命令解析、参数处理、命令路由、交互式 Shell 等核心功能
+- **rich**: 负责输出美化、表格渲染、进度条显示、颜色主题等视觉效果
 
 ```
 animeloader> help
@@ -573,10 +580,18 @@ Index('idx_download_status', DownloadTask.status)
 
 ## 7. 配置管理
 
-### 7.1 配置文件结构
+### 7.1 配置文件分离
+
+系统采用分离的配置文件设计：
+- **服务端配置** (`server/config.yaml`)：部署时与应用在一起，存储服务端运行所需的配置
+- **客户端配置** (`client_config.yaml`)：可由客户端随意指定位置，存储客户端连接和显示设置
+
+### 7.2 服务端配置文件
+
+服务端配置文件位于 `server/config.yaml`，部署时与服务器应用目录在一起。
 
 ```yaml
-# config.yaml
+# server/config.yaml
 server:
   host: "127.0.0.1"
   port: 8000
@@ -640,6 +655,61 @@ logging:
   backup_count: 5
 ```
 
+### 7.3 客户端配置文件
+
+客户端配置文件可由用户随意指定位置（默认为 `~/.animeloader/client_config.yaml`），包含连接服务器和显示相关的配置。
+
+```yaml
+# client_config.yaml
+server:
+  url: "http://127.0.0.1:8000"  # 服务端URL
+  timeout: 30                    # 请求超时时间（秒）
+  retry_count: 3                 # 请求失败重试次数
+
+display:
+  theme: "auto"                  # 主题: auto, light, dark
+  table_max_rows: 20             # 表格默认显示的最大行数
+  show_progress: true            # 是否显示下载进度条
+  refresh_interval: 5            # 自动刷新间隔（秒，用于实时状态监控）
+  
+  # 颜色配置
+  colors:
+    success: "green"
+    error: "red"
+    warning: "yellow"
+    info: "blue"
+    download_speed: "cyan"
+    upload_speed: "magenta"
+
+ui:
+  use_rich: true                 # 是否使用 rich 库进行美化显示
+  use_cmd2: true                 # 是否使用 cmd2 框架（启用交互式 Shell）
+  emoji: true                    # 是否在输出中使用 emoji
+  compact_mode: false            # 紧凑模式（减少空白行）
+  verbose: false                 # 详细输出模式
+  
+  # cmd2 选项
+  cmd2:
+    allow_cli_args: true         # 允许命令行参数
+    shortcuts: true              # 启用快捷键
+    persistent_history_file: "~/.animeloader/.cmd2_history"  # 命令历史文件
+
+logging:
+  level: "INFO"                  # 客户端日志级别
+  file: ""                       # 客户端日志文件路径（空则不记录文件）
+```
+
+### 7.4 配置文件加载优先级
+
+**服务端配置加载顺序：**
+1. `server/config.yaml`（相对于服务器应用目录）
+2. 环境变量覆盖（可选）
+
+**客户端配置加载顺序：**
+1. 命令行参数指定的配置文件路径（`--config`）
+2. `~/.animeloader/client_config.yaml`（用户主目录）
+3. 环境变量覆盖（可选）
+
 ## 8. 部署方案
 
 ### 8.1 开发环境
@@ -651,11 +721,14 @@ pip install -r requirements.txt
 # 初始化数据库
 python -m server.database.init_db
 
-# 启动服务端
+# 启动服务端（使用 server/config.yaml 配置）
 python -m server.main
 
-# 启动客户端
+# 启动客户端（使用默认配置 ~/.animeloader/client_config.yaml）
 python -m client.main
+
+# 启动客户端（指定配置文件）
+python -m client.main --config /path/to/custom_config.yaml
 
 # 添加默认下载器（可选）
 animeloader> downloader add --name "本地aria2" --type aria2 --config '{"host": "127.0.0.1", "port": 6800, "secret": ""}' --default
@@ -663,6 +736,7 @@ animeloader> downloader add --name "本地aria2" --type aria2 --config '{"host":
 
 ### 8.2 生产环境
 
+**服务端部署：**
 ```bash
 # 使用 systemd 管理
 # /etc/systemd/system/animeloader.service
@@ -681,6 +755,23 @@ RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
+```
+
+**客户端部署：**
+客户端可部署在任何能访问服务端的机器上，配置文件位置可自由指定：
+
+```bash
+# 创建客户端配置目录
+mkdir -p ~/.animeloader
+
+# 复制或创建配置文件
+cp client_config.yaml ~/.animeloader/
+
+# 编辑配置文件，设置服务端地址
+vim ~/.animeloader/client_config.yaml
+
+# 启动客户端
+python -m client.main
 ```
 
 ## 9. 扩展性考虑

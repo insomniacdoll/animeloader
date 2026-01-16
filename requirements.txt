@@ -1,6 +1,7 @@
 # Core dependencies
 sqlalchemy>=2.0.0
 cmd2>=2.4.0
+rich>=13.7.0
 requests>=2.31.0
 feedparser>=6.0.10
 apscheduler>=3.10.0

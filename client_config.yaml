@@ -1,0 +1,40 @@
+# AnimeLoader 客户端配置文件
+# 此文件可以放置在任意位置，启动时通过 --config 参数指定
+# 默认位置：~/.animeloader/client_config.yaml
+
+server:
+  url: "http://127.0.0.1:8000"  # 服务端URL
+  timeout: 30                    # 请求超时时间（秒）
+  retry_count: 3                 # 请求失败重试次数
+
+display:
+  theme: "auto"                  # 主题: auto, light, dark
+  table_max_rows: 20             # 表格默认显示的最大行数
+  show_progress: true            # 是否显示下载进度条
+  refresh_interval: 5            # 自动刷新间隔（秒，用于实时状态监控）
+  
+  # 颜色配置
+  colors:
+    success: "green"
+    error: "red"
+    warning: "yellow"
+    info: "blue"
+    download_speed: "cyan"
+    upload_speed: "magenta"
+
+ui:
+  use_rich: true                 # 是否使用 rich 库进行美化显示
+  use_cmd2: true                 # 是否使用 cmd2 框架（启用交互式 Shell）
+  emoji: true                    # 是否在输出中使用 emoji
+  compact_mode: false            # 紧凑模式（减少空白行）
+  verbose: false                 # 详细输出模式
+  
+  # cmd2 选项
+  cmd2:
+    allow_cli_args: true         # 允许命令行参数
+    shortcuts: true              # 启用快捷键
+    persistent_history_file: "~/.animeloader/.cmd2_history"  # 命令历史文件
+
+logging:
+  level: "INFO"                  # 客户端日志级别
+  file: ""                       # 客户端日志文件路径（空则不记录文件）
