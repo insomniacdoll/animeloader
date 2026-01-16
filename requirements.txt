@@ -1,0 +1,19 @@
+# Core dependencies
+sqlalchemy>=2.0.0
+cmd2>=2.4.0
+requests>=2.31.0
+feedparser>=6.0.10
+apscheduler>=3.10.0
+pyyaml>=6.0.1
+
+# Optional dependencies for aria2
+aria2p>=0.11.0
+
+# Optional dependencies for FastAPI (if REST API needed)
+fastapi>=0.109.0
+uvicorn>=0.27.0
+pydantic>=2.5.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
