@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from server.database import init_database
 from server.utils import setup_logger, config, init_config
+from server.api.routes import router
 
 
 def parse_args():
@@ -34,6 +35,7 @@ class AnimeLoaderServer:
             level=self.config.get('logging.level', 'INFO') if self.config else 'INFO'
         )
         self.running = False
+        self.app = None
         
         # 注册信号处理
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -50,6 +52,30 @@ class AnimeLoaderServer:
             # 初始化数据库
             init_database()
             self.logger.info("Database initialized successfully")
+            
+            # 初始化FastAPI应用
+            from fastapi import FastAPI
+            from fastapi.middleware.cors import CORSMiddleware
+            
+            self.app = FastAPI(
+                title="AnimeLoader API",
+                description="动画下载管理服务端API",
+                version="0.1.0"
+            )
+            
+            # 添加CORS中间件
+            self.app.add_middleware(
+                CORSMiddleware,
+                allow_origins=["*"],
+                allow_credentials=True,
+                allow_methods=["*"],
+                allow_headers=["*"],
+            )
+            
+            # 注册路由
+            self.app.include_router(router)
+            
+            self.logger.info("FastAPI application initialized")
             
             # TODO: 初始化调度器
             scheduler_enabled = self.config.get('scheduler.enabled', True) if self.config else True
@@ -73,7 +99,7 @@ class AnimeLoaderServer:
         debug = self.config.get('server.debug', False) if self.config else False
         
         self.logger.info(f"AnimeLoader server is ready")
-        self.logger.info(f"Server would listen on {host}:{port}")
+        self.logger.info(f"Server listening on {host}:{port}")
         self.logger.info(f"Debug mode: {debug}")
         
         print("=" * 50)
@@ -83,18 +109,23 @@ class AnimeLoaderServer:
         print(f"Port: {port}")
         print(f"Debug: {debug}")
         print("=" * 50)
-        print("Note: API server implementation is pending")
+        print("API Documentation:")
+        print(f"  - Swagger UI: http://{host}:{port}/docs")
+        print(f"  - ReDoc: http://{host}:{port}/redoc")
+        print("=" * 50)
         print("Press Ctrl+C to stop the server")
         print("=" * 50)
         
         self.running = True
         
         try:
-            while self.running:
-                # TODO: 启动 API 服务器
-                # TODO: 启动调度器
-                import time
-                time.sleep(1)
+            import uvicorn
+            uvicorn.run(
+                self.app,
+                host=host,
+                port=port,
+                log_level="info" if debug else "warning"
+            )
         except KeyboardInterrupt:
             self.logger.info("Keyboard interrupt received")
         finally:
@@ -105,7 +136,6 @@ class AnimeLoaderServer:
             self.logger.info("Stopping AnimeLoader server...")
             self.running = False
             # TODO: 停止调度器
-            # TODO: 停止 API 服务器
             self.logger.info("AnimeLoader server stopped")
 
 

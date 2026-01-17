@@ -1,6 +1,6 @@
 import re
 from typing import Dict, Any
-from server.parsers.base_parser import BaseParser
+from server.link_parsers.base_parser import BaseParser
 
 
 class Ed2kParser(BaseParser):

@@ -113,7 +113,7 @@ animeloader/
 │   │   ├── downloader_service.py # 下载器管理服务
 │   │   ├── scheduler_service.py  # 调度服务
 │   │   └── smart_parser_service.py # 智能解析服务
-│   ├── parsers/          # 链接解析器（可扩展）
+│   ├── link_parsers/    # 链接解析器（可扩展）
 │   │   ├── __init__.py
 │   │   ├── base_parser.py      # 基础解析器
 │   │   ├── magnet_parser.py    # 磁力链接解析器
@@ -815,8 +815,8 @@ link_types:
     - magnet                # 支持的链接类型
     - ed2k
   parsers:
-    magnet: "server.parsers.magnet_parser.MagnetParser"
-    ed2k: "server.parsers.ed2k_parser.Ed2kParser"
+    magnet: "server.link_parsers.magnet_parser.MagnetParser"
+    ed2k: "server.link_parsers.ed2k_parser.Ed2kParser"
 
 downloaders:
   enabled:
@@ -1028,14 +1028,14 @@ class BaseParser(ABC):
 ```
 
 **添加新链接类型的步骤：**
-1. 在 `server/parsers/` 目录下创建新的解析器类，继承 `BaseParser`
+1. 在 `server/link_parsers/` 目录下创建新的解析器类，继承 `BaseParser`
 2. 实现抽象方法：`parse()`, `validate()`, `get_download_command()`
 3. 在配置文件中注册新链接类型
 4. 在 `Link.link_type` 中添加新类型
 
 **示例：添加 HTTP 链接支持**
 ```python
-# server/parsers/http_parser.py
+# server/link_parsers/http_parser.py
 class HttpParser(BaseParser):
     def parse(self, url: str) -> dict:
         # 解析HTTP链接

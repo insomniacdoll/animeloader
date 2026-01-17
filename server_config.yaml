@@ -27,8 +27,8 @@ link_types:
     - magnet                # 支持的链接类型
     - ed2k
   parsers:
-    magnet: "server.parsers.magnet_parser.MagnetParser"
-    ed2k: "server.parsers.ed2k_parser.Ed2kParser"
+    magnet: "server.link_parsers.magnet_parser.MagnetParser"
+    ed2k: "server.link_parsers.ed2k_parser.Ed2kParser"
 
 downloaders:
   enabled:
