@@ -6,7 +6,7 @@ server:
   debug: false
 
 database:
-  path: "./data/animeloader.db"
+  path: "~/.animeloader/data/animeloader.db"  # 数据库文件路径，默认在用户目录下
 
 rss:
   check_interval: 3600      # RSS检查间隔（秒）
@@ -15,7 +15,7 @@ rss:
   link_retention_days: 30   # 链接保留天数
 
 download:
-  download_dir: "./downloads"
+  download_dir: "~/.animeloader/downloads"  # 下载目录，默认在用户目录下
   max_concurrent_downloads: 3
   chunk_size: 8192
   retry_count: 3            # 下载失败重试次数
@@ -56,8 +56,14 @@ pikpak:
 scheduler:
   enabled: true
 
+smart_parser:
+  timeout: 30                # 网站解析超时时间（秒）
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"  # 用户代理
+  max_results: 10            # 最大返回结果数
+  auto_add_rss: true         # 智能添加动画时是否自动解析RSS源
+
 logging:
   level: "INFO"
-  file: "./logs/animeloader.log"
+  file: "~/.animeloader/logs/animeloader.log"  # 日志文件路径，默认在用户目录下
   max_bytes: 10485760  # 10MB
   backup_count: 5

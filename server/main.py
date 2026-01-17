@@ -1,19 +1,37 @@
 import sys
 import os
 import signal
+import argparse
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from server.database import init_database
-from server.utils import setup_logger, config
+from server.utils import setup_logger, config, init_config
+
+
+def parse_args():
+    """解析命令行参数"""
+    parser = argparse.ArgumentParser(
+        description='AnimeLoader Server - 动画下载管理服务端'
+    )
+    parser.add_argument(
+        '--config',
+        type=str,
+        default=None,
+        help='配置文件路径（默认：~/.animeloader/server_config.yaml）'
+    )
+    return parser.parse_args()
 
 
 class AnimeLoaderServer:
-    def __init__(self):
+    def __init__(self, config_instance=None):
+        # 使用传入的配置实例或全局配置
+        self.config = config_instance if config_instance is not None else config
+        
         self.logger = setup_logger(
             name='animeloader',
-            log_file=config.get('logging.file', './logs/animeloader.log'),
-            level=config.get('logging.level', 'INFO')
+            log_file=self.config.get_path('logging.file', '~/.animeloader/logs/animeloader.log') if self.config else '~/.animeloader/logs/animeloader.log',
+            level=self.config.get('logging.level', 'INFO') if self.config else 'INFO'
         )
         self.running = False
         
@@ -34,7 +52,7 @@ class AnimeLoaderServer:
             self.logger.info("Database initialized successfully")
             
             # TODO: 初始化调度器
-            scheduler_enabled = config.get('scheduler.enabled', True)
+            scheduler_enabled = self.config.get('scheduler.enabled', True) if self.config else True
             if scheduler_enabled:
                 self.logger.info("Scheduler is enabled (implementation pending)")
             
@@ -50,9 +68,9 @@ class AnimeLoaderServer:
         if not self.initialize():
             sys.exit(1)
         
-        host = config.get('server.host', '127.0.0.1')
-        port = config.get('server.port', 8000)
-        debug = config.get('server.debug', False)
+        host = self.config.get('server.host', '127.0.0.1') if self.config else '127.0.0.1'
+        port = self.config.get('server.port', 8000) if self.config else 8000
+        debug = self.config.get('server.debug', False) if self.config else False
         
         self.logger.info(f"AnimeLoader server is ready")
         self.logger.info(f"Server would listen on {host}:{port}")
@@ -92,7 +110,14 @@ class AnimeLoaderServer:
 
 
 def main():
-    server = AnimeLoaderServer()
+    # 解析命令行参数
+    args = parse_args()
+    
+    # 初始化配置
+    config_instance = init_config(args.config)
+    
+    # 启动服务器
+    server = AnimeLoaderServer(config_instance)
     server.start()
 
 

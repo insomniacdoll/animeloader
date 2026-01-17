@@ -8,6 +8,13 @@ animeloader 是一个用于订阅动画发布和管理动画下载内容的 Pyth
 
 - **动画订阅管理**：添加、删除、修改动画订阅信息
 - **RSS源管理**：添加、删除、检查RSS订阅源
+- **智能解析功能**：
+  - 支持从动画网站链接自动解析动画信息和RSS订阅链接
+  - 当前支持 https://mikanani.me/（蜜柑计划）
+  - 动画智能解析支持连锁操作，解析动画后可自动解析RSS源
+  - RSS源智能解析需指定所属动画
+  - 解析结果有多个时提供交互式选择界面
+  - 支持多选和范围选择（如 1,2,3 或 1-3）
 - **链接管理**：查看、过滤下载链接，支持多种链接类型（magnet、ed2k等）
 - **下载器管理**：支持多种下载器（aria2、pikpak等），支持扩展新的下载器
 - **下载任务管理**：针对每个链接创建下载任务，支持暂停、恢复、取消
@@ -35,6 +42,8 @@ animeloader 是一个用于订阅动画发布和管理动画下载内容的 Pyth
 - **界面美化**: rich (客户端命令行交互美化)
 - **HTTP客户端**: requests
 - **RSS解析**: feedparser
+- **HTML解析**: beautifulsoup4 (用于网站智能解析)
+- **交互式选择**: inquirer (用于命令行交互选择)
 - **任务调度**: APScheduler
 - **日志**: logging
 - **aria2 RPC**: aria2p (可选，用于aria2下载器)
@@ -82,12 +91,13 @@ animeloader 是一个用于订阅动画发布和管理动画下载内容的 Pyth
 animeloader/
 ├── IFLOW.md              # 项目说明
 ├── DESIGN.md             # 设计文档
+├── LICENSE               # 许可证
 ├── requirements.txt      # 依赖列表
-├── config.yaml           # 默认配置文件（仅用于开发）
+├── server_config.yaml    # 服务端配置文件（仅用于开发）
+├── client_config.yaml    # 客户端配置文件（仅用于开发）
 ├── server/               # 服务端代码
 │   ├── __init__.py
 │   ├── main.py           # 服务端入口
-│   ├── config.yaml       # 服务端配置文件（部署时与应用在一起）
 │   ├── models/           # 数据模型
 │   │   ├── __init__.py
 │   │   ├── anime.py      # 动画模型
@@ -101,12 +111,17 @@ animeloader/
 │   │   ├── link_service.py       # 链接管理服务
 │   │   ├── download_service.py   # 下载服务
 │   │   ├── downloader_service.py # 下载器管理服务
-│   │   └── scheduler_service.py  # 调度服务
+│   │   ├── scheduler_service.py  # 调度服务
+│   │   └── smart_parser_service.py # 智能解析服务
 │   ├── parsers/          # 链接解析器（可扩展）
 │   │   ├── __init__.py
 │   │   ├── base_parser.py      # 基础解析器
 │   │   ├── magnet_parser.py    # 磁力链接解析器
 │   │   └── ed2k_parser.py      # ed2k链接解析器
+│   ├── site_parsers/     # 网站智能解析器（可扩展）
+│   │   ├── __init__.py
+│   │   ├── base_site_parser.py # 基础网站解析器
+│   │   └── mikan_parser.py     # 蜜柑计划解析器
 │   ├── downloaders/       # 下载器实现（可扩展）
 │   │   ├── __init__.py
 │   │   ├── base_downloader.py   # 基础下载器接口
@@ -121,20 +136,35 @@ animeloader/
 │   │   └── init_db.py
 │   └── utils/            # 工具函数
 │       ├── __init__.py
+│       ├── config.py     # 配置加载
 │       └── logger.py
 └── client/               # 客户端代码
     ├── __init__.py
     ├── main.py           # 客户端入口
     ├── commands/         # CLI 命令
     │   ├── __init__.py
+    │   ├── anime_commands.py     # 动画命令
     │   ├── rss_commands.py       # RSS源命令
     │   ├── link_commands.py      # 链接命令
     │   ├── download_commands.py  # 下载命令
     │   ├── downloader_commands.py # 下载器命令
     │   └── status_commands.py    # 状态命令
-    └── api/              # API 客户端
+    ├── api/              # API 客户端
+    │   ├── __init__.py
+    │   └── client.py
+    └── utils/            # 工具函数
         ├── __init__.py
-        └── client.py
+        └── config.py     # 客户端配置加载
+
+# 用户目录（默认配置位置）
+~/.animeloader/
+├── server_config.yaml    # 服务端配置文件（默认位置）
+├── client_config.yaml    # 客户端配置文件（默认位置）
+├── data/                 # 数据库文件目录
+│   └── animeloader.db
+├── downloads/            # 下载目录
+└── logs/                 # 日志目录
+    └── animeloader.log
 ```
 
 ## 4. 服务端设计
@@ -301,6 +331,91 @@ class DownloadTask:
 - `get_supported_downloader_types()` - 获取支持的下载器类型列表
 - `validate_downloader_config(downloader_type, config)` - 验证下载器配置
 
+#### 4.2.8 SmartParserService (智能解析服务 - 可扩展)
+
+智能解析服务用于从动画网站链接自动解析动画信息和RSS订阅链接信息。
+
+- `parse_anime(url: str) -> List[Dict]` - 解析动画链接，返回可能的动画信息列表
+- `parse_rss(url: str, anime_id: int) -> List[Dict]` - 解析RSS链接，返回可能的RSS源信息列表（需指定所属动画）
+- `parse_anime_with_rss(url: str, auto_add_rss: bool = True) -> Dict` - 解析动画链接并自动解析RSS源（连锁解析）
+- `get_supported_sites() -> List[str]` - 获取支持的动画网站列表
+- `register_site_parser(site_name: str, parser_class)` - 注册新的网站解析器
+
+**智能解析流程：**
+
+1. **动画智能解析**：
+   - 用户提供一个动画网站链接
+   - 系统识别网站类型并调用对应的解析器
+   - 解析器提取动画基本信息（标题、描述、封面等）
+   - 如果解析结果有多个，返回列表供用户选择
+   - 用户选择后，系统创建动画记录
+   - 如果启用连锁解析，自动解析该动画下的RSS源
+
+2. **RSS源智能解析**：
+   - 用户提供一个RSS网站链接，并指定所属的动画
+   - 系统识别网站类型并调用对应的解析器
+   - 解析器提取RSS源信息（名称、URL、画质等）
+   - 如果解析结果有多个，返回列表供用户选择
+   - 用户选择后，系统创建RSS源记录
+
+**支持的网站：**
+- https://mikanani.me/（蜜柑计划）
+
+**网站解析器接口设计：**
+```python
+class BaseSiteParser(ABC):
+    @abstractmethod
+    def can_parse(self, url: str) -> bool:
+        """判断是否可以解析该URL"""
+        pass
+
+    @abstractmethod
+    def parse_anime(self, url: str) -> List[Dict]:
+        """解析动画信息，返回可能的动画列表"""
+        pass
+
+    @abstractmethod
+    def parse_rss(self, url: str, anime_id: int) -> List[Dict]:
+        """解析RSS源信息，返回可能的RSS源列表"""
+        pass
+
+    @abstractmethod
+    def get_site_name(self) -> str:
+        """获取网站名称"""
+        pass
+```
+
+**智能解析返回数据格式：**
+
+动画信息格式：
+```python
+{
+    'title': '鬼灭之刃',
+    'title_en': 'Demon Slayer',
+    'description': '动画描述',
+    'cover_url': 'https://example.com/cover.jpg',
+    'status': 'ongoing',
+    'total_episodes': 12,
+    'rss_sources': [  # 可选，如果解析器能同时解析RSS
+        {
+            'name': '蜜柑计划 1080P',
+            'url': 'https://mikanani.me/RSS/Bangumi/12345',
+            'quality': '1080p'
+        }
+    ]
+}
+```
+
+RSS源信息格式：
+```python
+{
+    'name': '蜜柑计划 1080P',
+    'url': 'https://mikanani.me/RSS/Bangumi/12345',
+    'quality': '1080p',
+    'auto_download': True
+}
+```
+
 ### 4.3 API 接口
 
 #### RESTful API 设计
@@ -310,6 +425,8 @@ class DownloadTask:
 GET    /api/anime                   # 搜索动画
 GET    /api/anime/{id}              # 获取动画详情
 POST   /api/anime                   # 创建动画
+POST   /api/anime/smart-parse       # 智能解析动画信息
+POST   /api/anime/smart-add         # 智能添加动画（支持连锁解析RSS）
 
 # RSS源相关
 GET    /api/anime/{id}/rss-sources  # 获取动画的所有RSS源
@@ -318,6 +435,13 @@ GET    /api/rss-sources/{id}        # 获取单个RSS源
 PUT    /api/rss-sources/{id}        # 更新RSS源
 DELETE /api/rss-sources/{id}        # 删除RSS源
 POST   /api/rss-sources/{id}/check  # 手动检查RSS源新链接
+POST   /api/rss-sources/smart-parse # 智能解析RSS源信息
+POST   /api/rss-sources/smart-add   # 智能添加RSS源
+
+# 智能解析相关
+GET    /api/smart-parser/sites      # 获取支持的网站列表
+POST   /api/smart-parser/parse-anime  # 解析动画链接
+POST   /api/smart-parser/parse-rss    # 解析RSS链接
 
 # 链接相关
 GET    /api/rss-sources/{id}/links  # 获取RSS源的所有链接（包含下载状态）
@@ -351,7 +475,52 @@ GET    /api/links/{id}/downloads    # 获取链接的所有下载任务
 
 ## 5. 客户端设计
 
-### 5.1 CLI 命令结构
+### 5.1 智能解析用户体验
+
+智能解析功能通过交互式的方式为用户提供便捷的添加体验。当用户使用 `smart-add` 命令时，系统会：
+
+1. **解析链接**：自动识别网站类型并提取信息
+2. **显示选项**：如果解析结果有多个，以表格形式展示供用户选择
+3. **交互选择**：用户可以通过输入数字或范围（如 1,2,3 或 1-3）选择多个选项
+4. **确认添加**：显示即将添加的信息，用户确认后执行添加操作
+5. **连锁操作**：对于动画智能解析，可选择是否继续解析RSS源
+
+**交互式选择示例：**
+```
+正在解析链接: https://mikanani.me/Home/Bangumi/12345
+找到 2 个可能的动画：
+
+┌────┬────────────────────────────────────┬──────────────────────────┬────────┬────────┐
+│ ID │ 标题                               │ 英文标题                 │ 状态   │ 集数   │
+├────┼────────────────────────────────────┼──────────────────────────┼────────┼────────┤
+│  1 │ 鬼灭之刃                           │ Demon Slayer             │ 连载中 │ 12集   │
+│  2 │ 鬼灭之刃 柱训练篇                  │ Demon Slayer: Hashira    │ 连载中 │ 8集    │
+│    │                                    │ Training Arc             │        │        │
+└────┴────────────────────────────────────┴──────────────────────────┴────────┴────────┘
+
+请选择要添加的动画（输入ID，如 1）：1
+
+✓ 动画添加成功：鬼灭之刃
+
+是否自动解析RSS源？[Y/n]: y
+
+找到 3 个RSS源：
+
+┌────┬────────────────┬──────────┬──────────────────┐
+│ ID │ 名称           │ 画质     │ 自动下载         │
+├────┼────────────────┼──────────┼──────────────────┤
+│  1 │ 蜜柑计划 1080P │ 1080p    │ 是               │
+│  2 │ 蜜柑计划 720P  │ 720p     │ 是               │
+│  3 │ 蜜柑计划 480P  │ 480p     │ 是               │
+└────┴────────────────┴──────────┴──────────────────┘
+
+请选择要添加的RSS源（可多选，如 1,2 或 1-3）：1,2
+
+✓ RSS源添加成功：蜜柑计划 1080P
+✓ RSS源添加成功：蜜柑计划 720P
+```
+
+### 5.2 CLI 命令结构
 
 基于 **cmd2** 框架构建命令行架构，提供交互式 Shell 环境，并集成 **rich** 库进行界面美化，支持表格、进度条、彩色输出、语法高亮等丰富的视觉效果。
 
@@ -377,9 +546,10 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  add     添加动画
-  list    列出所有动画
-  show    显示动画详情
+  add         添加动画
+  smart-add   智能添加动画（从链接自动解析）
+  list        列出所有动画
+  show        显示动画详情
 
 animeloader> rss --help
 Usage: rss [OPTIONS] COMMAND [ARGS]...
@@ -388,12 +558,13 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  add     添加RSS源
-  list    列出RSS源
-  remove  删除RSS源
-  update  更新RSS源
-  check   手动检查RSS源新链接
-  show    显示RSS源详情
+  add         添加RSS源
+  smart-add   智能添加RSS源（从链接自动解析）
+  list        列出RSS源
+  remove      删除RSS源
+  update      更新RSS源
+  check       手动检查RSS源新链接
+  show        显示RSS源详情
 
 animeloader> link --help
 Usage: link [OPTIONS] COMMAND [ARGS]...
@@ -448,11 +619,27 @@ Commands:
   system  查看系统信息
 ```
 
-### 5.2 命令示例
+### 5.3 命令示例
 
 ```bash
 # 添加动画
 animeloader> anime add --title "鬼灭之刃" --title-en "Demon Slayer" --description "鬼灭之刃"
+
+# 智能添加动画（从链接自动解析）
+animeloader> anime smart-add --url "https://mikanani.me/Home/Bangumi/12345"
+# 系统会自动解析链接，提取动画信息
+# 如果解析结果有多个，会显示列表供用户选择：
+# [1] 鬼灭之刃 (Demon Slayer) - 2024年4月新番
+# [2] 鬼灭之刃 柱训练篇 (Demon Slayer: Hashira Training Arc) - 2024年春季
+# 请选择：1
+# 动画添加成功！
+# 是否自动解析RSS源？[Y/n]: y
+# 找到 3 个RSS源：
+# [1] 蜜柑计划 1080P
+# [2] 蜜柑计划 720P
+# [3] 蜜柑计划 480P
+# 请选择要添加的RSS源（可多选，如 1,2）：1,2
+# RSS源添加成功！
 
 # 列出动画
 animeloader> anime list
@@ -462,6 +649,15 @@ animeloader> anime show --id 1
 
 # 添加RSS源
 animeloader> rss add --anime-id 1 --name "DMHY 1080P" --url "https://example.com/rss" --quality 1080p --auto-download
+
+# 智能添加RSS源（从链接自动解析）
+animeloader> rss smart-add --url "https://mikanani.me/RSS/Bangumi/12345" --anime-id 1
+# 系统会自动解析链接，提取RSS源信息
+# 如果解析结果有多个，会显示列表供用户选择：
+# [1] 蜜柑计划 1080P
+# [2] 蜜柑计划 720P
+# 请选择：1
+# RSS源添加成功！
 
 # 列出RSS源
 animeloader> rss list --anime-id 1
@@ -583,22 +779,22 @@ Index('idx_download_status', DownloadTask.status)
 ### 7.1 配置文件分离
 
 系统采用分离的配置文件设计：
-- **服务端配置** (`server/config.yaml`)：部署时与应用在一起，存储服务端运行所需的配置
+- **服务端配置**：可由用户指定位置（默认为 `~/.animeloader/server_config.yaml`），存储服务端运行所需的配置，包括数据库路径、下载目录等
 - **客户端配置** (`client_config.yaml`)：可由客户端随意指定位置，存储客户端连接和显示设置
 
 ### 7.2 服务端配置文件
 
-服务端配置文件位于 `server/config.yaml`，部署时与服务器应用目录在一起。
+服务端配置文件可由用户通过命令行参数指定位置（默认为 `~/.animeloader/server_config.yaml`），存储服务端运行所需的配置，包括数据库路径、下载目录等。
 
 ```yaml
-# server/config.yaml
+# ~/.animeloader/server_config.yaml
 server:
   host: "127.0.0.1"
   port: 8000
   debug: false
 
 database:
-  path: "./data/animeloader.db"
+  path: "~/.animeloader/data/animeloader.db"  # 数据库文件路径，默认在用户目录下
 
 rss:
   check_interval: 3600      # RSS检查间隔（秒）
@@ -607,7 +803,7 @@ rss:
   link_retention_days: 30   # 链接保留天数
 
 download:
-  download_dir: "./downloads"
+  download_dir: "~/.animeloader/downloads"  # 下载目录，默认在用户目录下
   max_concurrent_downloads: 3
   chunk_size: 8192
   retry_count: 3            # 下载失败重试次数
@@ -648,9 +844,15 @@ pikpak:
 scheduler:
   enabled: true
 
+smart_parser:
+  timeout: 30                # 网站解析超时时间（秒）
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"  # 用户代理
+  max_results: 10            # 最大返回结果数
+  auto_add_rss: true         # 智能添加动画时是否自动解析RSS源
+
 logging:
   level: "INFO"
-  file: "./logs/animeloader.log"
+  file: "~/.animeloader/logs/animeloader.log"  # 日志文件路径，默认在用户目录下
   max_bytes: 10485760  # 10MB
   backup_count: 5
 ```
@@ -697,18 +899,26 @@ ui:
 logging:
   level: "INFO"                  # 客户端日志级别
   file: ""                       # 客户端日志文件路径（空则不记录文件）
+
+smart_parser:
+  auto_select: false             # 当只有一个解析结果时是否自动选择
+  show_details: true             # 是否显示详细信息
+  confirm_before_add: true       # 添加前是否要求确认
 ```
 
 ### 7.4 配置文件加载优先级
 
 **服务端配置加载顺序：**
-1. `server/config.yaml`（相对于服务器应用目录）
-2. 环境变量覆盖（可选）
+1. 命令行参数指定的配置文件路径（`--config`）
+2. `~/.animeloader/server_config.yaml`（用户主目录）
+3. `server_config.yaml`（相对于项目根目录，仅用于开发环境）
+4. 环境变量覆盖（可选）
 
 **客户端配置加载顺序：**
 1. 命令行参数指定的配置文件路径（`--config`）
 2. `~/.animeloader/client_config.yaml`（用户主目录）
-3. 环境变量覆盖（可选）
+3. `client_config.yaml`（相对于项目根目录，仅用于开发环境）
+4. 环境变量覆盖（可选）
 
 ## 8. 部署方案
 
@@ -721,10 +931,13 @@ pip install -r requirements.txt
 # 初始化数据库
 python -m server.database.init_db
 
-# 启动服务端（使用 server/config.yaml 配置）
+# 启动服务端（使用项目根目录的 server_config.yaml）
 python -m server.main
 
-# 启动客户端（使用默认配置 ~/.animeloader/client_config.yaml）
+# 启动服务端（指定配置文件）
+python -m server.main --config /path/to/custom_config.yaml
+
+# 启动客户端（使用项目根目录的 client_config.yaml）
 python -m client.main
 
 # 启动客户端（指定配置文件）
@@ -738,6 +951,15 @@ animeloader> downloader add --name "本地aria2" --type aria2 --config '{"host":
 
 **服务端部署：**
 ```bash
+# 创建服务端配置目录
+mkdir -p ~/.animeloader
+
+# 复制或创建配置文件
+cp server_config.yaml ~/.animeloader/server_config.yaml
+
+# 编辑配置文件，设置数据库路径、下载目录等
+vim ~/.animeloader/server_config.yaml
+
 # 使用 systemd 管理
 # /etc/systemd/system/animeloader.service
 
@@ -749,7 +971,7 @@ After=network.target
 Type=simple
 User=anime
 WorkingDirectory=/opt/animeloader
-ExecStart=/usr/bin/python3 -m server.main
+ExecStart=/usr/bin/python3 -m server.main --config /home/anime/.animeloader/server_config.yaml
 Restart=always
 RestartSec=10
 
@@ -963,7 +1185,76 @@ class QBittorrentDownloader(BaseDownloader):
 - 支持多个动画来源站点
 - 实现来源插件机制
 
-### 9.5 分布式下载
+### 9.5 网站解析器扩展
+
+系统采用插件化的网站解析器架构，支持灵活扩展新的动画网站：
+
+**网站解析器接口设计：**
+```python
+class BaseSiteParser(ABC):
+    @abstractmethod
+    def can_parse(self, url: str) -> bool:
+        """判断是否可以解析该URL"""
+        pass
+
+    @abstractmethod
+    def parse_anime(self, url: str) -> List[Dict]:
+        """解析动画信息，返回可能的动画列表"""
+        pass
+
+    @abstractmethod
+    def parse_rss(self, url: str, anime_id: int) -> List[Dict]:
+        """解析RSS源信息，返回可能的RSS源列表"""
+        pass
+
+    @abstractmethod
+    def get_site_name(self) -> str:
+        """获取网站名称"""
+        pass
+```
+
+**添加新网站支持的步骤：**
+1. 在 `server/site_parsers/` 目录下创建新的网站解析器类，继承 `BaseSiteParser`
+2. 实现抽象方法：`can_parse()`, `parse_anime()`, `parse_rss()`, `get_site_name()`
+3. 在智能解析服务中注册新网站解析器
+4. 更新支持的网站列表
+
+**示例：添加 DMHY 支持器**
+```python
+# server/site_parsers/dmhy_parser.py
+class DMHYParser(BaseSiteParser):
+    def can_parse(self, url: str) -> bool:
+        return 'dmhy.org' in url
+
+    def parse_anime(self, url: str) -> List[Dict]:
+        # 解析DMHY动画页面
+        return [
+            {
+                'title': '动画标题',
+                'title_en': 'English Title',
+                'description': '描述',
+                'cover_url': '封面URL',
+                'status': 'ongoing',
+                'total_episodes': 12
+            }
+        ]
+
+    def parse_rss(self, url: str, anime_id: int) -> List[Dict]:
+        # 解析DMHY RSS页面
+        return [
+            {
+                'name': 'DMHY 1080P',
+                'url': 'RSS链接',
+                'quality': '1080p',
+                'auto_download': True
+            }
+        ]
+
+    def get_site_name(self) -> str:
+        return "DMHY"
+```
+
+### 9.6 分布式下载
 
 - 支持多节点部署
 - 实现任务分发
@@ -990,15 +1281,20 @@ class QBittorrentDownloader(BaseDownloader):
 - 测试各个服务模块
 - 测试数据库操作
 - 测试业务逻辑
+- 测试智能解析服务（网站解析器、链接解析等）
+- 测试配置加载和路径展开
 
 ### 11.2 集成测试
 
 - 测试 API 接口
 - 测试客户端-服务端交互
 - 测试下载流程
+- 测试智能添加流程（动画和RSS源的智能解析）
+- 测试多选择交互逻辑
 
 ### 11.3 测试覆盖率目标
 
 - 核心功能: 80%+
 - 业务逻辑: 70%+
+- 智能解析: 75%+
 - 整体: 60%+

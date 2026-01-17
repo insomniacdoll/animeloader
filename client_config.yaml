@@ -38,3 +38,8 @@ ui:
 logging:
   level: "INFO"                  # 客户端日志级别
   file: ""                       # 客户端日志文件路径（空则不记录文件）
+
+smart_parser:
+  auto_select: false             # 当只有一个解析结果时是否自动选择
+  show_details: true             # 是否显示详细信息
+  confirm_before_add: true       # 添加前是否要求确认

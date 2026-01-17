@@ -1,6 +1,7 @@
 import sys
 import os
 import argparse
+import shlex
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -65,8 +66,185 @@ class AnimeLoaderCLI(cmd2.Cmd):
         self.console.print(f"{emoji}{message}", style="info")
     
     def do_anime(self, args):
-        """动画相关命令"""
-        self._print_info("动画命令尚未实现")
+        """动画相关命令
+        
+        子命令:
+          add         添加动画
+          list        列出所有动画
+          show        显示动画详情
+          smart-add   智能添加动画（从链接自动解析）
+        """
+        if not args:
+            self._print_info("请指定子命令: add, list, show, smart-add")
+            self._print_info("使用 'anime --help' 查看详细帮助")
+            return
+        
+        # 解析子命令
+        parts = args.split(maxsplit=1)
+        subcommand = parts[0]
+        subcommand_args = parts[1] if len(parts) > 1 else ""
+        
+        if subcommand == 'add':
+            self._anime_add(subcommand_args)
+        elif subcommand == 'list':
+            self._anime_list(subcommand_args)
+        elif subcommand == 'show':
+            self._anime_show(subcommand_args)
+        elif subcommand == 'smart-add':
+            self._anime_smart_add(subcommand_args)
+        elif subcommand in ['--help', '-h', 'help']:
+            self._anime_help()
+        else:
+            self._print_error(f"未知的子命令: {subcommand}")
+            self._print_info("可用子命令: add, list, show, smart-add")
+    
+    def _anime_add(self, args):
+        """添加动画"""
+        parser = argparse.ArgumentParser(prog='anime add', add_help=False)
+        parser.add_argument('--title', required=True, help='动画标题')
+        parser.add_argument('--title-en', help='英文标题')
+        parser.add_argument('--description', help='描述')
+        parser.add_argument('--cover-url', help='封面URL')
+        parser.add_argument('--status', default='ongoing', help='状态 (ongoing, completed)')
+        parser.add_argument('--total-episodes', type=int, help='总集数')
+        parser.add_argument('-h', '--help', action='store_true', help='显示帮助')
+        
+        try:
+            parsed = parser.parse_args(shlex.split(args))
+            if parsed.help:
+                parser.print_help()
+                return
+            
+            # TODO: 实现添加动画的逻辑
+            self.console.print(f"添加动画: {parsed.title}")
+            if parsed.title_en:
+                self.console.print(f"英文标题: {parsed.title_en}")
+            if parsed.description:
+                self.console.print(f"描述: {parsed.description}")
+            self.console.print("[yellow]功能实现中...[/yellow]")
+        except SystemExit:
+            pass
+        except Exception as e:
+            self._print_error(f"参数错误: {e}")
+    
+    def _anime_list(self, args):
+        """列出所有动画"""
+        parser = argparse.ArgumentParser(prog='anime list', add_help=False)
+        parser.add_argument('--keyword', help='搜索关键词')
+        parser.add_argument('-h', '--help', action='store_true', help='显示帮助')
+        
+        try:
+            parsed = parser.parse_args(shlex.split(args))
+            if parsed.help:
+                parser.print_help()
+                return
+            
+            # TODO: 实现列出动画的逻辑
+            self.console.print("列出动画")
+            if parsed.keyword:
+                self.console.print(f"搜索关键词: {parsed.keyword}")
+            self.console.print("[yellow]功能实现中...[/yellow]")
+        except SystemExit:
+            pass
+        except Exception as e:
+            self._print_error(f"参数错误: {e}")
+    
+    def _anime_show(self, args):
+        """显示动画详情"""
+        parser = argparse.ArgumentParser(prog='anime show', add_help=False)
+        parser.add_argument('--id', type=int, required=True, help='动画ID')
+        parser.add_argument('-h', '--help', action='store_true', help='显示帮助')
+        
+        try:
+            parsed = parser.parse_args(shlex.split(args))
+            if parsed.help:
+                parser.print_help()
+                return
+            
+            # TODO: 实现显示动画详情的逻辑
+            self.console.print(f"显示动画详情: ID={parsed.id}")
+            self.console.print("[yellow]功能实现中...[/yellow]")
+        except SystemExit:
+            pass
+        except Exception as e:
+            self._print_error(f"参数错误: {e}")
+    
+    def _anime_smart_add(self, args):
+        """智能添加动画（从链接自动解析）"""
+        parser = argparse.ArgumentParser(prog='anime smart-add', add_help=False)
+        parser.add_argument('--url', required=True, help='动画网站链接')
+        parser.add_argument('--auto-add-rss', action='store_true', help='是否自动解析RSS源')
+        parser.add_argument('-h', '--help', action='store_true', help='显示帮助')
+        
+        try:
+            parsed = parser.parse_args(shlex.split(args))
+            if parsed.help:
+                parser.print_help()
+                return
+            
+            self.console.print(f"正在解析链接: {parsed.url}")
+            
+            # TODO: 调用服务端API进行智能解析
+            # response = requests.post(f"{self.api_client.base_url}/api/anime/smart-parse", json={'url': parsed.url})
+            # anime_list = response.json()
+            
+            # 模拟解析结果
+            anime_list = [
+                {
+                    'title': '鬼灭之刃',
+                    'title_en': 'Demon Slayer',
+                    'description': '动画描述',
+                    'status': 'ongoing',
+                    'total_episodes': 12
+                }
+            ]
+            
+            if not anime_list:
+                self.console.print("[red]未能解析到动画信息[/red]")
+                return
+            
+            # 显示解析结果
+            table = Table(title="解析结果")
+            table.add_column("ID", style="cyan")
+            table.add_column("标题", style="magenta")
+            table.add_column("英文标题", style="green")
+            table.add_column("状态", style="yellow")
+            table.add_column("集数", style="blue")
+            
+            for idx, anime in enumerate(anime_list, 1):
+                table.add_row(
+                    str(idx),
+                    anime['title'],
+                    anime.get('title_en', ''),
+                    anime.get('status', ''),
+                    str(anime.get('total_episodes', 0))
+                )
+            
+            self.console.print(table)
+            
+            # TODO: 实现选择和添加逻辑
+            self.console.print("[yellow]功能实现中...[/yellow]")
+        except SystemExit:
+            pass
+        except Exception as e:
+            self._print_error(f"参数错误: {e}")
+    
+    def _anime_help(self):
+        """显示 anime 命令的帮助信息"""
+        help_text = """
+动画相关命令
+
+用法: anime <子命令> [选项]
+
+子命令:
+  add         添加动画
+  list        列出所有动画
+  show        显示动画详情
+  smart-add   智能添加动画（从链接自动解析）
+
+使用 'anime <子命令> --help' 查看子命令的详细帮助
+        """
+        self.console.print(help_text)
     
     def do_rss(self, args):
         """RSS源相关命令"""
@@ -176,6 +354,8 @@ def main():
         console.print("\n[yellow]程序已中断[/yellow]")
     except Exception as e:
         console.print(f"[red]发生错误: {e}[/red]")
+        import traceback
+        traceback.print_exc()
 
 
 if __name__ == '__main__':
