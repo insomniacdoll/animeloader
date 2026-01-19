@@ -18,9 +18,14 @@ from server.api.schemas import (
     SmartParseAnimeResponse,
     SmartAddAnimeRequest,
     SmartAddAnimeResponse,
+    RSSSourceCreate,
+    RSSSourceUpdate,
+    RSSSourceResponse,
+    RSSSourceListResponse,
     MessageResponse,
     ErrorResponse
 )
+from server.services.rss_service import RSSService
 
 
 # 创建路由器
@@ -37,6 +42,11 @@ def get_anime_service(db: Session = Depends(get_db)) -> AnimeService:
 def get_smart_parser_service() -> SmartParserService:
     """获取智能解析服务实例"""
     return SmartParserService()
+
+
+def get_rss_service(db: Session = Depends(get_db)) -> RSSService:
+    """获取RSS源服务实例"""
+    return RSSService(db)
 
 
 # ========== 动画相关API ==========
@@ -217,6 +227,118 @@ def smart_add_anime(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"智能添加失败: {str(e)}"
         )
+
+
+# ========== RSS源相关API ==========
+
+@router.get(
+    "/anime/{anime_id}/rss-sources",
+    response_model=RSSSourceListResponse,
+    summary="获取动画的所有RSS源",
+    description="根据动画ID获取该动画的所有RSS源"
+)
+def get_anime_rss_sources(
+    anime_id: int,
+    db: Session = Depends(get_db),
+    rss_service: RSSService = Depends(get_rss_service)
+):
+    """获取动画的所有RSS源"""
+    rss_sources = rss_service.get_rss_sources(anime_id)
+    return RSSSourceListResponse(
+        total=len(rss_sources),
+        items=[RSSSourceResponse.model_validate(rss) for rss in rss_sources]
+    )
+
+
+@router.get(
+    "/rss-sources/{rss_source_id}",
+    response_model=RSSSourceResponse,
+    summary="获取单个RSS源",
+    description="根据ID获取单个RSS源的详细信息"
+)
+def get_rss_source(
+    rss_source_id: int,
+    rss_service: RSSService = Depends(get_rss_service)
+):
+    """获取单个RSS源"""
+    rss_source = rss_service.get_rss_source(rss_source_id)
+    if not rss_source:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"RSS源ID {rss_source_id} 不存在"
+        )
+    return RSSSourceResponse.model_validate(rss_source)
+
+
+@router.post(
+    "/rss-sources",
+    response_model=RSSSourceResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="创建RSS源",
+    description="创建新的RSS源记录"
+)
+def create_rss_source(
+    rss_data: RSSSourceCreate,
+    rss_service: RSSService = Depends(get_rss_service)
+):
+    """创建RSS源"""
+    rss_source = rss_service.create_rss_source(
+        anime_id=rss_data.anime_id,
+        name=rss_data.name,
+        url=rss_data.url,
+        quality=rss_data.quality,
+        is_active=rss_data.is_active,
+        auto_download=rss_data.auto_download
+    )
+    return RSSSourceResponse.model_validate(rss_source)
+
+
+@router.put(
+    "/rss-sources/{rss_source_id}",
+    response_model=RSSSourceResponse,
+    summary="更新RSS源",
+    description="更新RSS源信息"
+)
+def update_rss_source(
+    rss_source_id: int,
+    rss_data: RSSSourceUpdate,
+    rss_service: RSSService = Depends(get_rss_service)
+):
+    """更新RSS源"""
+    rss_source = rss_service.update_rss_source(
+        rss_source_id=rss_source_id,
+        name=rss_data.name,
+        url=rss_data.url,
+        quality=rss_data.quality,
+        is_active=rss_data.is_active,
+        auto_download=rss_data.auto_download
+    )
+    if not rss_source:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"RSS源ID {rss_source_id} 不存在"
+        )
+    return RSSSourceResponse.model_validate(rss_source)
+
+
+@router.delete(
+    "/rss-sources/{rss_source_id}",
+    response_model=MessageResponse,
+    summary="删除RSS源",
+    description="删除RSS源记录"
+)
+def delete_rss_source(
+    rss_source_id: int,
+    rss_service: RSSService = Depends(get_rss_service)
+):
+    """删除RSS源"""
+    success = rss_service.delete_rss_source(rss_source_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"RSS源ID {rss_source_id} 不存在"
+        )
+    return MessageResponse(message=f"RSS源ID {rss_source_id} 已删除")
 
 
 # ========== 智能解析通用API ==========

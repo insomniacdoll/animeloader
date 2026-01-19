@@ -5,6 +5,7 @@ from server.site_parsers.base_site_parser import BaseSiteParser
 from server.site_parsers.mikan_parser import MikanParser
 from server.utils.config import config
 from server.services.anime_service import AnimeService
+from server.services.rss_service import RSSService
 
 
 class SmartParserService:
@@ -140,9 +141,24 @@ class SmartParserService:
             else:
                 rss_sources_to_add = rss_sources_list
             
-            # TODO: 添加RSS源到数据库（需要实现RSS服务）
-            # 这里暂时返回RSS源信息
-            result['rss_sources'] = rss_sources_to_add
+            # 添加RSS源到数据库
+            rss_service = RSSService(db)
+            for rss_info in rss_sources_to_add:
+                rss_source = rss_service.create_rss_source(
+                    anime_id=anime.id,
+                    name=rss_info.get('name', ''),
+                    url=rss_info.get('url', ''),
+                    quality=rss_info.get('quality'),
+                    is_active=True,
+                    auto_download=rss_info.get('auto_download', True)
+                )
+                result['rss_sources'].append({
+                    'id': rss_source.id,
+                    'name': rss_source.name,
+                    'url': rss_source.url,
+                    'quality': rss_source.quality,
+                    'auto_download': rss_source.auto_download
+                })
         
         return result
     

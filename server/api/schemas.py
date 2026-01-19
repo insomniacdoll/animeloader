@@ -110,3 +110,45 @@ class ErrorResponse(BaseModel):
     error: str
     detail: Optional[str] = None
     success: bool = False
+
+
+# ========== RSS源相关模型 ==========
+
+class RSSSourceBase(BaseModel):
+    """RSS源基础模型"""
+    name: str = Field(..., description="RSS源名称", min_length=1, max_length=255)
+    url: str = Field(..., description="RSS订阅链接", min_length=1, max_length=500)
+    quality: Optional[str] = Field(None, description="画质 (1080p, 720p, etc.)", max_length=50)
+    is_active: bool = Field(default=True, description="是否激活")
+    auto_download: bool = Field(default=False, description="是否自动下载")
+
+
+class RSSSourceCreate(RSSSourceBase):
+    """创建RSS源请求模型"""
+    anime_id: int = Field(..., description="动画ID")
+
+
+class RSSSourceUpdate(BaseModel):
+    """更新RSS源请求模型"""
+    name: Optional[str] = Field(None, description="RSS源名称", min_length=1, max_length=255)
+    url: Optional[str] = Field(None, description="RSS订阅链接", min_length=1, max_length=500)
+    quality: Optional[str] = Field(None, description="画质 (1080p, 720p, etc.)", max_length=50)
+    is_active: Optional[bool] = Field(None, description="是否激活")
+    auto_download: Optional[bool] = Field(None, description="是否自动下载")
+
+
+class RSSSourceResponse(RSSSourceBase):
+    """RSS源响应模型"""
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int
+    anime_id: int
+    last_checked_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class RSSSourceListResponse(BaseModel):
+    """RSS源列表响应模型"""
+    total: int
+    items: List[RSSSourceResponse]
