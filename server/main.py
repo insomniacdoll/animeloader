@@ -7,7 +7,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from server.database import init_database
 from server.utils import setup_logger, config, init_config
-from server.api.routes import router
+from server.api import create_api_router
+from server.api.routes.scheduler import set_scheduler_service
+from server.api.routes.rss_extra import set_scheduler_service as set_rss_extra_scheduler_service
+from server.api.schemas import *
 from server.services.scheduler_service import SchedulerService
 
 
@@ -73,8 +76,9 @@ class AnimeLoaderServer:
                 allow_headers=["*"],
             )
             
-            # 注册路由
-            self.app.include_router(router)
+            # 创建API路由
+            api_router = create_api_router()
+            self.app.include_router(api_router)
             
             self.logger.info("FastAPI application initialized")
             
@@ -84,6 +88,11 @@ class AnimeLoaderServer:
                 from server.database import get_db
                 self.scheduler_service = SchedulerService(get_db)
                 self.scheduler_service.start_scheduler()
+                
+                # 设置调度服务实例到路由模块
+                set_scheduler_service(self.scheduler_service)
+                set_rss_extra_scheduler_service(self.scheduler_service)
+                
                 self.logger.info("Scheduler initialized and started")
             else:
                 self.scheduler_service = None

@@ -160,7 +160,29 @@ animeloader/
 │   │   └── pikpak_downloader.py # pikpak离线下载器
 │   ├── api/              # API 接口
 │   │   ├── __init__.py
-│   │   └── routes.py
+│   │   ├── routes/       # API 路由（按模块拆分）
+│   │   │   ├── __init__.py
+│   │   │   ├── anime.py          # 动画相关路由
+│   │   │   ├── anime_extra.py    # 动画扩展路由
+│   │   │   ├── rss.py            # RSS源路由
+│   │   │   ├── rss_extra.py      # RSS源扩展路由
+│   │   │   ├── link.py           # 链接路由
+│   │   │   ├── link_extra.py     # 链接扩展路由
+│   │   │   ├── downloader.py     # 下载器路由
+│   │   │   ├── download.py       # 下载任务路由
+│   │   │   ├── scheduler.py      # 调度服务路由
+│   │   │   ├── smart_parser.py   # 智能解析路由
+│   │   │   └── health.py         # 健康检查路由
+│   │   └── schemas/      # Pydantic 模型（按模块拆分）
+│   │       ├── __init__.py
+│   │       ├── common.py         # 通用响应模型
+│   │       ├── anime.py          # 动画相关模型
+│   │       ├── rss.py            # RSS源相关模型
+│   │       ├── link.py           # 链接相关模型
+│   │       ├── downloader.py     # 下载器相关模型
+│   │       ├── download.py       # 下载任务相关模型
+│   │       ├── scheduler.py      # 调度服务相关模型
+│   │       └── smart_parser.py   # 智能解析相关模型
 │   ├── database/         # 数据库相关
 │   │   ├── __init__.py
 │   │   ├── session.py
@@ -197,6 +219,48 @@ animeloader/
 └── logs/                 # 日志目录
     └── animeloader.log
 ```
+
+## 3.5 代码架构优化
+
+### 3.5.1 模块化设计
+
+为了提高代码的可维护性和可扩展性，项目采用了模块化的设计：
+
+- **API 路由模块化**：将 API 路由按功能模块拆分为独立文件（anime、rss、link、downloader、download、scheduler、smart_parser、health）
+- **Schemas 模块化**：将 Pydantic 模型按功能模块拆分为独立文件（common、anime、rss、link、downloader、download、scheduler、smart_parser）
+- **清晰的职责分离**：每个文件只负责一个功能模块，便于维护和扩展
+
+### 3.5.2 代码组织原则
+
+- **单一职责**：每个模块只负责一个功能领域
+- **高内聚低耦合**：相关功能组织在一起，模块间依赖最小化
+- **易于扩展**：添加新功能只需创建新的路由和 schemas 文件
+- **清晰的导入路径**：通过 `__init__.py` 统一导出，简化导入
+
+### 3.5.3 模块说明
+
+**API 路由模块** (`server/api/routes/`)：
+- `anime.py` - 动画相关路由（CRUD、智能解析）
+- `anime_extra.py` - 动画扩展路由（获取RSS源）
+- `rss.py` - RSS源相关路由（CRUD）
+- `rss_extra.py` - RSS源扩展路由（获取链接、检查RSS）
+- `link.py` - 链接相关路由（CRUD）
+- `link_extra.py` - 链接扩展路由（获取下载任务）
+- `downloader.py` - 下载器相关路由（CRUD、测试、状态）
+- `download.py` - 下载任务相关路由（CRUD、控制）
+- `scheduler.py` - 调度服务相关路由（任务管理）
+- `smart_parser.py` - 智能解析相关路由（解析动画）
+- `health.py` - 健康检查路由
+
+**Schemas 模块** (`server/api/schemas/`)：
+- `common.py` - 通用响应模型（MessageResponse、ErrorResponse）
+- `anime.py` - 动画相关模型（AnimeBase、AnimeCreate、AnimeResponse等）
+- `rss.py` - RSS源相关模型（RSSSourceBase、RSSSourceCreate、RSSSourceResponse等）
+- `link.py` - 链接相关模型（LinkBase、LinkCreate、LinkResponse等）
+- `downloader.py` - 下载器相关模型（DownloaderBase、DownloaderCreate、DownloaderResponse等）
+- `download.py` - 下载任务相关模型（DownloadTaskBase、DownloadTaskCreate、DownloadTaskResponse等）
+- `scheduler.py` - 调度服务相关模型（SchedulerJobCreate、SchedulerJobsResponse等）
+- `smart_parser.py` - 智能解析相关模型（SmartParseAnimeRequest、SmartParseAnimeResponse等）
 
 ## 4. 服务端设计
 
