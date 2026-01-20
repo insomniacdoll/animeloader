@@ -13,6 +13,7 @@ from server.api.schemas import (
     RSSSourceListResponse,
     MessageResponse
 )
+from server.api.auth import verify_api_key
 
 
 router = APIRouter(prefix="/rss-sources", tags=["RSS源"])
@@ -30,6 +31,7 @@ def get_rss_service(db: Session = Depends(get_db)) -> RSSService:
     description="获取所有RSS源列表"
 )
 def get_rss_sources(
+    api_key: str = Depends(verify_api_key),
     anime_id: int | None = None,
     rss_service: RSSService = Depends(get_rss_service)
 ):
@@ -54,6 +56,7 @@ def get_rss_sources(
 )
 def get_rss_source(
     rss_source_id: int,
+    api_key: str = Depends(verify_api_key),
     rss_service: RSSService = Depends(get_rss_service)
 ):
     """获取单个RSS源"""
@@ -75,6 +78,7 @@ def get_rss_source(
 )
 def create_rss_source(
     rss_data: RSSSourceCreate,
+    api_key: str = Depends(verify_api_key),
     rss_service: RSSService = Depends(get_rss_service)
 ):
     """创建RSS源"""
@@ -98,6 +102,7 @@ def create_rss_source(
 def update_rss_source(
     rss_source_id: int,
     rss_data: RSSSourceUpdate,
+    api_key: str = Depends(verify_api_key),
     rss_service: RSSService = Depends(get_rss_service)
 ):
     """更新RSS源"""
@@ -125,6 +130,7 @@ def update_rss_source(
 )
 def delete_rss_source(
     rss_source_id: int,
+    api_key: str = Depends(verify_api_key),
     rss_service: RSSService = Depends(get_rss_service)
 ):
     """删除RSS源"""

@@ -12,6 +12,7 @@ from server.api.schemas import (
     MessageResponse,
     RSSCheckResponse
 )
+from server.api.auth import verify_api_key
 
 
 router = APIRouter(prefix="/scheduler", tags=["调度服务"])
@@ -44,6 +45,7 @@ def get_scheduler_service() -> SchedulerService:
     description="获取所有调度任务列表"
 )
 def get_scheduler_jobs(
+    api_key: str = Depends(verify_api_key),
     scheduler_service: SchedulerService = Depends(get_scheduler_service)
 ):
     """获取所有调度任务"""
@@ -59,6 +61,7 @@ def get_scheduler_jobs(
 )
 def create_scheduler_job(
     job_data: SchedulerJobCreate,
+    api_key: str = Depends(verify_api_key),
     scheduler_service: SchedulerService = Depends(get_scheduler_service)
 ):
     """创建调度任务"""
@@ -81,6 +84,7 @@ def create_scheduler_job(
 )
 def delete_scheduler_job(
     job_id: str,
+    api_key: str = Depends(verify_api_key),
     scheduler_service: SchedulerService = Depends(get_scheduler_service)
 ):
     """删除调度任务"""
@@ -104,6 +108,7 @@ def delete_scheduler_job(
 )
 def pause_scheduler_job(
     job_id: str,
+    api_key: str = Depends(verify_api_key),
     scheduler_service: SchedulerService = Depends(get_scheduler_service)
 ):
     """暂停调度任务"""
@@ -127,6 +132,7 @@ def pause_scheduler_job(
 )
 def resume_scheduler_job(
     job_id: str,
+    api_key: str = Depends(verify_api_key),
     scheduler_service: SchedulerService = Depends(get_scheduler_service)
 ):
     """恢复调度任务"""
@@ -149,6 +155,7 @@ def resume_scheduler_job(
     description="启动调度器"
 )
 def start_scheduler(
+    api_key: str = Depends(verify_api_key),
     scheduler_service: SchedulerService = Depends(get_scheduler_service)
 ):
     """启动调度器"""
@@ -166,6 +173,7 @@ def start_scheduler(
     description="停止调度器"
 )
 def stop_scheduler(
+    api_key: str = Depends(verify_api_key),
     scheduler_service: SchedulerService = Depends(get_scheduler_service)
 ):
     """停止调度器"""

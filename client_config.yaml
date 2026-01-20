@@ -6,6 +6,10 @@ server:
   url: "http://127.0.0.1:8000"  # 服务端URL
   timeout: 30                    # 请求超时时间（秒）
   retry_count: 3                 # 请求失败重试次数
+  # API密钥（必填，用于身份验证）
+  # 请从服务端启动日志中获取默认API密钥
+  # 示例: "550e8400-e29b-41d4-a716-446655440000"
+  api_key: "35dddd59-65eb-42bc-963d-819ddbd54179"
 
 display:
   theme: "auto"                  # 主题: auto, light, dark

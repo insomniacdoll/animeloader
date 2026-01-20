@@ -27,24 +27,49 @@ class ClientConfig:
     def _load_config(self) -> Dict[str, Any]:
         if not os.path.exists(self.config_path):
             # 返回默认配置
-            return self._get_default_config()
+            config = self._get_default_config()
+        else:
+            try:
+                with open(self.config_path, 'r', encoding='utf-8') as f:
+                    loaded_config = yaml.safe_load(f) or {}
+                    # 合并默认配置
+                    default_config = self._get_default_config()
+                    config = self._merge_config(default_config, loaded_config)
+            except Exception as e:
+                print(f"Warning: Failed to load config from {self.config_path}: {e}")
+                config = self._get_default_config()
         
-        try:
-            with open(self.config_path, 'r', encoding='utf-8') as f:
-                loaded_config = yaml.safe_load(f) or {}
-                # 合并默认配置
-                default_config = self._get_default_config()
-                return self._merge_config(default_config, loaded_config)
-        except Exception as e:
-            print(f"Warning: Failed to load config from {self.config_path}: {e}")
-            return self._get_default_config()
+        # 验证API密钥是否配置
+        api_key = config.get('server', {}).get('api_key', '')
+        if not api_key or api_key.strip() == '':
+            print("=" * 60)
+            print("错误: 未配置API密钥")
+            print("=" * 60)
+            print("客户端需要API密钥才能访问服务端API。")
+            print()
+            print("请按以下步骤配置API密钥:")
+            print("1. 启动服务端，服务端会自动创建默认API密钥")
+            print("2. 从服务端日志中复制默认API密钥")
+            print("3. 在配置文件中设置 server.api_key 字段")
+            print(f"   配置文件路径: {self.config_path}")
+            print()
+            print("配置示例:")
+            print("server:")
+            print("  url: \"http://127.0.0.1:8000\"")
+            print("  timeout: 30")
+            print("  api_key: \"<从服务端日志中复制的API密钥>\"")
+            print("=" * 60)
+            raise ValueError("API密钥未配置，请在配置文件中设置 server.api_key")
+        
+        return config
     
     def _get_default_config(self) -> Dict[str, Any]:
         return {
             'server': {
                 'url': 'http://127.0.0.1:8000',
                 'timeout': 30,
-                'retry_count': 3
+                'retry_count': 3,
+                'api_key': ''
             },
             'display': {
                 'theme': 'auto',

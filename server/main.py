@@ -52,10 +52,34 @@ class AnimeLoaderServer:
     def initialize(self) -> bool:
         try:
             self.logger.info("Initializing AnimeLoader server...")
-            
+
             # 初始化数据库
             init_database()
             self.logger.info("Database initialized successfully")
+
+            # 初始化默认API密钥
+            from server.database import get_db
+            from server.services.api_key_service import APIKeyService
+            db = next(get_db())
+            try:
+                api_key_service = APIKeyService(db)
+                default_key = api_key_service.initialize_default_key()
+                self.logger.info(f"Default API key initialized: {default_key.name} (key: {default_key.key})")
+                
+                # 在控制台显示API密钥信息
+                print("=" * 70)
+                print("API 密钥信息")
+                print("=" * 70)
+                print(f"默认API密钥已创建: {default_key.name}")
+                print(f"API密钥: {default_key.key}")
+                print()
+                print("⚠️  重要提示:")
+                print("  1. 请将此API密钥复制到客户端配置文件中")
+                print("  2. 在客户端配置文件中设置 server.api_key 字段")
+                print("  3. 客户端需要此密钥才能访问服务端API")
+                print("=" * 70)
+            finally:
+                db.close()
             
             # 初始化FastAPI应用
             from fastapi import FastAPI

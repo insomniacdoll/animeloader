@@ -10,13 +10,55 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 import requests
 
 
+def get_default_api_key(base_url):
+    """获取默认API密钥"""
+    try:
+        # 初始化配置
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+        from server.utils.config import init_config
+        from server.database import get_db, get_engine
+        from server.services.api_key_service import APIKeyService
+        from server.models import Base
+        
+        # 初始化配置
+        init_config()
+        
+        # 初始化数据库
+        engine = get_engine()
+        Base.metadata.create_all(bind=engine)
+        
+        # 获取数据库会话
+        SessionLocal = next(get_db())
+        try:
+            api_key_service = APIKeyService(SessionLocal)
+            default_key = api_key_service.get_default_api_key()
+            return default_key.key if default_key else None
+        finally:
+            SessionLocal.close()
+    except Exception as e:
+        print(f"获取API密钥失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
 def test_server_api():
     """测试服务端API"""
     print("=" * 60)
     print("测试服务端API")
     print("=" * 60)
-    
+
     base_url = "http://127.0.0.1:8000"
+    headers = {}
+
+    # 获取API密钥
+    print("\n0. 获取默认API密钥...")
+    api_key = get_default_api_key(base_url)
+    if api_key:
+        headers['X-API-Key'] = api_key
+        print(f"✓ 获取API密钥成功: {api_key}")
+    else:
+        print("✗ 获取API密钥失败，将尝试不带API密钥的请求")
     
     # 测试健康检查
     print("\n1. 测试健康检查...")
@@ -40,6 +82,7 @@ def test_server_api():
         response = requests.post(
             f"{base_url}/api/anime/smart-parse",
             json={"url": test_url},
+            headers=headers,
             timeout=30
         )
         if response.status_code == 200:
@@ -68,6 +111,7 @@ def test_server_api():
                 "url": test_url,
                 "auto_add_rss": False
             },
+            headers=headers,
             timeout=30
         )
         if response.status_code == 200:
@@ -88,7 +132,7 @@ def test_server_api():
     # 测试获取动画列表
     print("\n4. 测试获取动画列表...")
     try:
-        response = requests.get(f"{base_url}/api/anime", timeout=5)
+        response = requests.get(f"{base_url}/api/anime", headers=headers, timeout=5)
         if response.status_code == 200:
             data = response.json()
             print("✓ 获取动画列表成功")
@@ -105,7 +149,7 @@ def test_server_api():
     # 测试获取支持的网站
     print("\n5. 测试获取支持的网站...")
     try:
-        response = requests.get(f"{base_url}/api/smart-parser/sites", timeout=5)
+        response = requests.get(f"{base_url}/api/smart-parser/sites", headers=headers, timeout=5)
         if response.status_code == 200:
             data = response.json()
             print("✓ 获取支持的网站成功")

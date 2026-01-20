@@ -10,6 +10,7 @@ from server.api.schemas import (
     RSSSourceListResponse,
     RSSSourceResponse
 )
+from server.api.auth import verify_api_key
 
 
 router = APIRouter(prefix="/anime", tags=["动画扩展"])
@@ -28,6 +29,7 @@ def get_rss_service(db: Session = Depends(get_db)) -> RSSService:
 )
 def get_anime_rss_sources(
     anime_id: int,
+    api_key: str = Depends(verify_api_key),
     rss_service: RSSService = Depends(get_rss_service)
 ):
     """获取动画的所有RSS源"""

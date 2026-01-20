@@ -22,6 +22,7 @@ from server.api.schemas.smart_parser import (
     SmartAddAnimeRequest
 )
 from server.api.schemas.anime import AnimeResponse as AnimeResponseSchema
+from server.api.auth import verify_api_key
 
 
 router = APIRouter(prefix="/anime", tags=["动画"])
@@ -48,6 +49,7 @@ def get_animes(
     limit: int = Query(100, ge=1, le=1000, description="返回的记录数"),
     search: Optional[str] = Query(None, description="搜索关键词（标题、英文标题、描述）"),
     status: Optional[str] = Query(None, description="状态过滤 (ongoing, completed, etc.)"),
+    api_key: str = Depends(verify_api_key),
     anime_service: AnimeService = Depends(get_anime_service)
 ):
     """获取动画列表"""
@@ -70,6 +72,7 @@ def get_animes(
 )
 def get_anime(
     anime_id: int,
+    api_key: str = Depends(verify_api_key),
     anime_service: AnimeService = Depends(get_anime_service)
 ):
     """获取单个动画详情"""
@@ -91,6 +94,7 @@ def get_anime(
 )
 def create_anime(
     anime_data: AnimeCreate,
+    api_key: str = Depends(verify_api_key),
     anime_service: AnimeService = Depends(get_anime_service)
 ):
     """创建动画"""
@@ -114,6 +118,7 @@ def create_anime(
 def update_anime(
     anime_id: int,
     anime_data: AnimeUpdate,
+    api_key: str = Depends(verify_api_key),
     anime_service: AnimeService = Depends(get_anime_service)
 ):
     """更新动画"""
@@ -142,6 +147,7 @@ def update_anime(
 )
 def delete_anime(
     anime_id: int,
+    api_key: str = Depends(verify_api_key),
     anime_service: AnimeService = Depends(get_anime_service)
 ):
     """删除动画"""
@@ -162,6 +168,7 @@ def delete_anime(
 )
 def smart_parse_anime(
     request: SmartParseAnimeRequest,
+    api_key: str = Depends(verify_api_key),
     smart_parser_service: SmartParserService = Depends(get_smart_parser_service)
 ):
     """智能解析动画信息"""
@@ -188,6 +195,7 @@ def smart_parse_anime(
 )
 def smart_add_anime(
     request: SmartAddAnimeRequest,
+    api_key: str = Depends(verify_api_key),
     db: Session = Depends(get_db),
     smart_parser_service: SmartParserService = Depends(get_smart_parser_service)
 ):

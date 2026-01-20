@@ -14,6 +14,7 @@ from server.api.schemas import (
     MessageResponse,
     RSSCheckResponse
 )
+from server.api.auth import verify_api_key
 
 
 router = APIRouter(prefix="/rss-sources", tags=["RSS源扩展"])
@@ -52,6 +53,7 @@ def get_scheduler_service() -> SchedulerService:
 )
 def get_rss_source_links(
     rss_source_id: int,
+    api_key: str = Depends(verify_api_key),
     is_downloaded: Optional[bool] = Query(None, description="是否已下载"),
     link_type: Optional[str] = Query(None, description="链接类型"),
     skip: int = Query(0, ge=0, description="跳过的记录数"),
@@ -88,6 +90,7 @@ def get_rss_source_links(
 )
 def check_rss_source(
     rss_source_id: int,
+    api_key: str = Depends(verify_api_key),
     auto_download: bool = Query(False, description="是否自动下载新链接"),
     scheduler_service: SchedulerService = Depends(get_scheduler_service)
 ):

@@ -3,15 +3,21 @@ from typing import Dict, Any, Optional
 
 
 class APIClient:
-    def __init__(self, base_url: str = "http://127.0.0.1:8000", timeout: int = 30, retry_count: int = 3):
+    def __init__(self, base_url: str = "http://127.0.0.1:8000", timeout: int = 30, retry_count: int = 3, api_key: Optional[str] = None):
         self.base_url = base_url.rstrip('/')
         self.timeout = timeout
         self.retry_count = retry_count
+        self.api_key = api_key
         self.session = requests.Session()
     
-    def _request(self, method: str, endpoint: str, params: Optional[Dict] = None, 
+    def _request(self, method: str, endpoint: str, params: Optional[Dict] = None,
                  data: Optional[Dict] = None, json_data: Optional[Dict] = None) -> Dict[str, Any]:
         url = f"{self.base_url}{endpoint}"
+        headers = {}
+        
+        # 添加 API key 到请求头
+        if self.api_key:
+            headers['X-API-Key'] = self.api_key
         
         for attempt in range(self.retry_count):
             try:
@@ -21,6 +27,7 @@ class APIClient:
                     params=params,
                     data=data,
                     json=json_data,
+                    headers=headers,
                     timeout=self.timeout
                 )
                 response.raise_for_status()

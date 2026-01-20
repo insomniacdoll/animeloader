@@ -14,6 +14,7 @@ from server.api.schemas import (
     DownloadStatusResponse,
     MessageResponse
 )
+from server.api.auth import verify_api_key
 
 
 router = APIRouter(prefix="/downloads", tags=["下载任务"])
@@ -31,6 +32,7 @@ def get_download_service(db: Session = Depends(get_db)) -> DownloadService:
     description="获取所有下载任务列表"
 )
 def get_downloads(
+    api_key: str = Depends(verify_api_key),
     rss_source_id: Optional[int] = Query(None, description="RSS源ID"),
     status: Optional[str] = Query(None, description="任务状态"),
     skip: int = Query(0, ge=0, description="跳过的记录数"),
@@ -64,6 +66,7 @@ def get_downloads(
     description="获取所有活跃的下载任务"
 )
 def get_active_downloads(
+    api_key: str = Depends(verify_api_key),
     download_service: DownloadService = Depends(get_download_service)
 ):
     """获取活跃的下载任务"""
@@ -84,6 +87,7 @@ def get_active_downloads(
 )
 def get_download_task(
     task_id: int,
+    api_key: str = Depends(verify_api_key),
     download_service: DownloadService = Depends(get_download_service)
 ):
     """获取单个下载任务"""
@@ -105,6 +109,7 @@ def get_download_task(
 )
 def create_download_task(
     task_data: DownloadTaskCreate,
+    api_key: str = Depends(verify_api_key),
     download_service: DownloadService = Depends(get_download_service)
 ):
     """创建下载任务"""
@@ -130,6 +135,7 @@ def create_download_task(
 )
 def start_download(
     task_id: int,
+    api_key: str = Depends(verify_api_key),
     download_service: DownloadService = Depends(get_download_service)
 ):
     """开始下载"""
@@ -150,6 +156,7 @@ def start_download(
 )
 def pause_download(
     task_id: int,
+    api_key: str = Depends(verify_api_key),
     download_service: DownloadService = Depends(get_download_service)
 ):
     """暂停下载"""
@@ -170,6 +177,7 @@ def pause_download(
 )
 def resume_download(
     task_id: int,
+    api_key: str = Depends(verify_api_key),
     download_service: DownloadService = Depends(get_download_service)
 ):
     """恢复下载"""
@@ -190,6 +198,7 @@ def resume_download(
 )
 def cancel_download(
     task_id: int,
+    api_key: str = Depends(verify_api_key),
     download_service: DownloadService = Depends(get_download_service)
 ):
     """取消下载"""
@@ -210,6 +219,7 @@ def cancel_download(
 )
 def get_download_status(
     task_id: int,
+    api_key: str = Depends(verify_api_key),
     download_service: DownloadService = Depends(get_download_service)
 ):
     """获取下载状态"""
@@ -230,6 +240,7 @@ def get_download_status(
 )
 def sync_download_status(
     task_id: int,
+    api_key: str = Depends(verify_api_key),
     download_service: DownloadService = Depends(get_download_service)
 ):
     """同步下载状态"""
@@ -250,6 +261,7 @@ def sync_download_status(
 )
 def delete_download_task(
     task_id: int,
+    api_key: str = Depends(verify_api_key),
     download_service: DownloadService = Depends(get_download_service)
 ):
     """删除下载任务"""

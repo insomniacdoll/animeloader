@@ -11,12 +11,43 @@ from client.api.client import APIClient
 from rich.console import Console
 
 
+def get_default_api_key():
+    """获取默认API密钥"""
+    try:
+        from server.utils.config import init_config
+        from server.database import get_db, get_engine
+        from server.services.api_key_service import APIKeyService
+        from server.models import Base
+        
+        # 初始化配置
+        init_config()
+        
+        # 初始化数据库
+        engine = get_engine()
+        Base.metadata.create_all(bind=engine)
+        
+        # 获取数据库会话
+        SessionLocal = next(get_db())
+        try:
+            api_key_service = APIKeyService(SessionLocal)
+            default_key = api_key_service.get_default_api_key()
+            return default_key.key if default_key else None
+        finally:
+            SessionLocal.close()
+    except Exception as e:
+        print(f"获取API密钥失败: {e}")
+        return None
+
+
 def test_smart_add_interaction():
     """测试智能添加的交互流程"""
     console = Console()
     
+    # 获取 API key
+    api_key = get_default_api_key()
+    
     # 初始化API客户端
-    api_client = APIClient(base_url="http://127.0.0.1:8000")
+    api_client = APIClient(base_url="http://127.0.0.1:8000", api_key=api_key)
     
     test_url = "https://mikanani.me/Home/Bangumi/3824"
     

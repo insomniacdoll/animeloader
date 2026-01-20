@@ -11,6 +11,7 @@ from server.api.schemas import (
     DownloadTaskResponse,
     MessageResponse
 )
+from server.api.auth import verify_api_key
 
 
 router = APIRouter(prefix="/links", tags=["链接扩展"])
@@ -29,6 +30,7 @@ def get_download_service(db: Session = Depends(get_db)) -> DownloadService:
 )
 def get_link_downloads(
     link_id: int,
+    api_key: str = Depends(verify_api_key),
     download_service: DownloadService = Depends(get_download_service)
 ):
     """获取链接的下载任务"""

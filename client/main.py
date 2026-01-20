@@ -23,11 +23,12 @@ class AnimeLoaderCLI(cmd2.Cmd):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.config = config
-        
+
         # 初始化 APIClient
         server_url = self.config.get('server.url', 'http://127.0.0.1:8000')
         timeout = self.config.get('server.timeout', 30)
-        self.api_client = APIClient(base_url=server_url, timeout=timeout)
+        api_key = self.config.get('server.api_key', '')
+        self.api_client = APIClient(base_url=server_url, timeout=timeout, api_key=api_key)
         
         # 初始化 Rich Console
         self.console = Console(theme=self._get_theme())

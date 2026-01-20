@@ -9,6 +9,7 @@ from server.api.schemas.smart_parser import (
     SmartParseAnimeResponse
 )
 from server.api.schemas.common import MessageResponse
+from server.api.auth import verify_api_key
 
 
 router = APIRouter(prefix="/smart-parser", tags=["智能解析"])
@@ -26,6 +27,7 @@ def get_smart_parser_service() -> SmartParserService:
     description="获取智能解析支持的动画网站列表"
 )
 def get_supported_sites(
+    api_key: str = Depends(verify_api_key),
     smart_parser_service: SmartParserService = Depends(get_smart_parser_service)
 ):
     """获取支持的网站列表"""
@@ -44,6 +46,7 @@ def get_supported_sites(
 )
 def parse_anime_link(
     request: SmartParseAnimeRequest,
+    api_key: str = Depends(verify_api_key),
     smart_parser_service: SmartParserService = Depends(get_smart_parser_service)
 ):
     """解析动画链接"""
