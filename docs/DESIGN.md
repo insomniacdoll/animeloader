@@ -8,27 +8,27 @@ animeloader 是一个用于订阅动画发布和管理动画下载内容的 Pyth
 
 > **注意**：本项目处于开发阶段，以下为核心功能的实现状态：
 >
-> - ✅ **已完成**：动画管理（添加、查询、更新、删除）、RSS源管理（添加、查询、更新、删除）、智能解析功能（蜜柑计划网站）、基础API框架
-> - 🚧 **开发中**：链接管理、下载器管理、下载任务管理、定时任务调度
-> - 📋 **计划中**：RSS源自动检查、链接自动下载、下载状态同步、多下载器支持
+> - ✅ **已完成**：动画管理（添加、查询、更新、删除）、RSS源管理（添加、查询、更新、删除）、智能解析功能（蜜柑计划网站）、链接管理、下载器管理、下载任务管理、定时任务调度、基础API框架
+> - 🚧 **开发中**：RSS源自动检查、链接自动下载、下载状态同步
+> - 📋 **计划中**：多下载器支持、命令行交互界面
 
 ### 1.2 核心功能
 
-- **动画订阅管理**：添加、删除、修改、查询动画订阅信息
-- **RSS源管理**：添加、删除、更新、查询RSS订阅源
+- **动画订阅管理**：添加、删除、修改、查询动画订阅信息 ✅
+- **RSS源管理**：添加、删除、更新、查询RSS订阅源 ✅
 - **智能解析功能**：
-  - 支持从动画网站链接自动解析动画信息和RSS订阅链接
-  - 当前支持 https://mikanani.me/（蜜柑计划）
-  - 动画智能解析支持连锁操作，解析动画后可自动解析RSS源
-  - RSS源智能解析需指定所属动画
-  - 解析结果有多个时提供交互式选择界面
-  - 支持多选和范围选择（如 1,2,3 或 1-3）
-- **链接管理**：查看、过滤下载链接，支持多种链接类型（magnet、ed2k等）- *开发中*
-- **下载器管理**：支持多种下载器（aria2、pikpak等），支持扩展新的下载器 - *开发中*
-- **下载任务管理**：针对每个链接创建下载任务，支持暂停、恢复、取消 - *计划中*
-- **定时下载任务**：自动检测新发布的动画并下载 - *计划中*
-- **下载状态监控**：实时查看下载进度和状态，支持同步外部下载器状态 - *计划中*
-- **命令行交互**：提供友好的 CLI 界面进行操作
+  - 支持从动画网站链接自动解析动画信息和RSS订阅链接 ✅
+  - 当前支持 https://mikanani.me/（蜜柑计划）✅
+  - 动画智能解析支持连锁操作，解析动画后可自动解析RSS源 ✅
+  - RSS源智能解析需指定所属动画 ✅
+  - 解析结果有多个时提供交互式选择界面 ✅
+  - 支持多选和范围选择（如 1,2,3 或 1-3）✅
+- **链接管理**：查看、过滤下载链接，支持多种链接类型（magnet、ed2k等）✅
+- **下载器管理**：支持多种下载器（aria2、pikpak等），支持扩展新的下载器 ✅
+- **下载任务管理**：针对每个链接创建下载任务，支持暂停、恢复、取消 ✅
+- **定时下载任务**：自动检测新发布的动画并下载 ✅
+- **下载状态监控**：实时查看下载进度和状态，支持同步外部下载器状态 ✅
+- **命令行交互**：提供友好的 CLI 界面进行操作 📋
 
 ### 1.3 目标用户
 
@@ -319,21 +319,19 @@ class DownloadTask:
 - `get_site_name_from_url(url: str) -> str` - 根据URL获取网站名称
 - `register_site_parser(parser)` - 注册新的网站解析器
 
-#### 4.2.4 LinkService (链接管理服务) 🚧
-
-*开发中 - 功能尚未实现*
+#### 4.2.4 LinkService (链接管理服务) ✅
 
 - `add_link(rss_source_id, episode_number, episode_title, link_type, url, **kwargs)` - 添加链接
-- `get_links(rss_source_id, is_downloaded=None)` - 获取RSS源的所有链接
+- `get_links(skip, limit, is_downloaded=None, link_type=None, rss_source_id=None)` - 获取链接列表，支持过滤
 - `get_link(link_id)` - 获取单个链接
 - `mark_as_downloaded(link_id)` - 标记链接为已下载
 - `update_link_status(link_id, is_available)` - 更新链接可用状态
 - `get_available_links(rss_source_id)` - 获取可用的下载链接
 - `filter_links_by_type(rss_source_id, link_type)` - 按链接类型过滤
+- `count_links(rss_source_id=None, is_downloaded=None, link_type=None)` - 统计链接数量
+- `delete_link(link_id)` - 删除链接
 
-#### 4.2.5 DownloadService (下载服务) 🚧
-
-*开发中 - 功能尚未实现*
+#### 4.2.5 DownloadService (下载服务) ✅
 
 - `create_download_task(link_id, rss_source_id, downloader_id=None)` - 创建下载任务
 - `start_download(task_id)` - 开始下载
@@ -341,35 +339,41 @@ class DownloadTask:
 - `resume_download(task_id)` - 恢复下载
 - `cancel_download(task_id)` - 取消下载
 - `get_download_status(task_id)` - 获取下载状态
-- `get_download_tasks(rss_source_id)` - 获取RSS源的所有下载任务
+- `get_download_tasks(skip, limit, rss_source_id=None, link_id=None, status=None)` - 获取下载任务列表，支持过滤
+- `get_download_task(task_id)` - 获取单个下载任务
 - `get_download_tasks_by_link(link_id)` - 获取链接的所有下载任务
 - `get_active_downloads()` - 获取所有活跃的下载任务
 - `sync_download_status(task_id)` - 同步下载器状态到本地
+- `count_download_tasks(rss_source_id=None, link_id=None, status=None)` - 统计下载任务数量
+- `delete_download_task(task_id)` - 删除下载任务
 
-#### 4.2.6 DownloaderService (下载器管理服务) 🚧
+#### 4.2.6 DownloaderService (下载器管理服务) ✅
 
-*开发中 - 功能尚未实现*
-
-- `add_downloader(name, downloader_type, config, is_default=False)` - 添加下载器
+- `add_downloader(name, downloader_type, config, is_default=False, max_concurrent_tasks=3)` - 添加下载器
 - `remove_downloader(downloader_id)` - 删除下载器
 - `update_downloader(downloader_id, **kwargs)` - 更新下载器配置
-- `get_downloaders()` - 获取所有下载器
+- `get_downloaders(skip, limit)` - 获取下载器列表
 - `get_downloader(downloader_id)` - 获取单个下载器
 - `get_default_downloader()` - 获取默认下载器
 - `set_default_downloader(downloader_id)` - 设置默认下载器
 - `get_downloader_by_type(downloader_type)` - 根据类型获取下载器
 - `test_downloader(downloader_id)` - 测试下载器连接
 - `get_downloader_status(downloader_id)` - 获取下载器状态（当前任务数等）
+- `get_supported_downloader_types()` - 获取支持的下载器类型列表
+- `validate_downloader_config(downloader_type, config)` - 验证下载器配置
 
-#### 4.2.7 SchedulerService (调度服务) 📋
-
-*计划中 - 功能尚未实现*
+#### 4.2.7 SchedulerService (调度服务) ✅
 
 - `start_scheduler()` - 启动调度器
 - `stop_scheduler()` - 停止调度器
 - `add_check_job(rss_source_id, interval)` - 添加RSS源检查任务
 - `remove_check_job(job_id)` - 移除检查任务
-- `check_rss_source(rss_source_id)` - 检查RSS源的新链接
+- `pause_job(job_id)` - 暂停任务
+- `resume_job(job_id)` - 恢复任务
+- `get_jobs()` - 获取所有任务
+- `get_job(job_id)` - 获取单个任务
+- `check_rss_source(rss_source_id, auto_download=False)` - 检查RSS源的新链接
+- `is_running()` - 检查调度器是否正在运行
 
 #### 4.2.8 LinkParserService (链接解析服务 - 可扩展) 📋
 
@@ -508,17 +512,17 @@ GET    /api/health                  # 健康检查
 
 ```
 # RSS源相关 📋
-POST   /api/rss-sources/{id}/check  # 手动检查RSS源新链接
-POST   /api/rss-sources/smart-parse # 智能解析RSS源信息
-POST   /api/rss-sources/smart-add   # 智能添加RSS源
+POST   /api/rss-sources/{id}/check  # 手动检查RSS源新链接 ✅
+POST   /api/rss-sources/smart-parse # 智能解析RSS源信息 📋
+POST   /api/rss-sources/smart-add   # 智能添加RSS源 📋
 
-# 链接相关 📋
+# 链接相关 ✅
 GET    /api/rss-sources/{id}/links  # 获取RSS源的所有链接（包含下载状态）
 GET    /api/links/{id}              # 获取单个链接
 GET    /api/links                   # 获取链接列表（支持过滤）
 POST   /api/links/{id}/mark-downloaded  # 标记为已下载
 
-# 下载器相关 📋
+# 下载器相关 ✅
 GET    /api/downloaders             # 获取所有下载器
 POST   /api/downloaders             # 添加下载器
 GET    /api/downloaders/{id}        # 获取单个下载器
@@ -529,7 +533,7 @@ POST   /api/downloaders/{id}/set-default  # 设置为默认下载器
 GET    /api/downloaders/default     # 获取默认下载器
 GET    /api/downloaders/types       # 获取支持的下载器类型
 
-# 下载任务相关 📋
+# 下载任务相关 ✅
 GET    /api/downloads               # 获取所有下载任务
 GET    /api/downloads/{id}          # 获取单个下载任务
 POST   /api/downloads               # 创建下载任务
@@ -540,6 +544,15 @@ POST   /api/downloads/{id}/cancel   # 取消下载
 POST   /api/downloads/{id}/sync     # 同步下载状态
 GET    /api/downloads/active        # 获取所有活跃的下载任务
 GET    /api/links/{id}/downloads    # 获取链接的所有下载任务
+
+# 调度相关 ✅
+POST   /api/scheduler/start         # 启动调度器
+POST   /api/scheduler/stop          # 停止调度器
+GET    /api/scheduler/jobs          # 获取所有任务
+POST   /api/scheduler/jobs          # 添加任务
+DELETE /api/scheduler/jobs/{id}     # 移除任务
+POST   /api/scheduler/jobs/{id}/pause    # 暂停任务
+POST   /api/scheduler/jobs/{id}/resume   # 恢复任务
 ```
 
 ## 5. 客户端设计

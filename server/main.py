@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from server.database import init_database
 from server.utils import setup_logger, config, init_config
 from server.api.routes import router
+from server.services.scheduler_service import SchedulerService
 
 
 def parse_args():
@@ -77,10 +78,16 @@ class AnimeLoaderServer:
             
             self.logger.info("FastAPI application initialized")
             
-            # TODO: 初始化调度器
+            # 初始化调度器
             scheduler_enabled = self.config.get('scheduler.enabled', True) if self.config else True
             if scheduler_enabled:
-                self.logger.info("Scheduler is enabled (implementation pending)")
+                from server.database import get_db
+                self.scheduler_service = SchedulerService(get_db)
+                self.scheduler_service.start_scheduler()
+                self.logger.info("Scheduler initialized and started")
+            else:
+                self.scheduler_service = None
+                self.logger.info("Scheduler is disabled")
             
             # TODO: 初始化下载器管理器
             self.logger.info("Downloader manager initialization (implementation pending)")
@@ -135,7 +142,12 @@ class AnimeLoaderServer:
         if self.running:
             self.logger.info("Stopping AnimeLoader server...")
             self.running = False
-            # TODO: 停止调度器
+            
+            # 停止调度器
+            if self.scheduler_service:
+                self.scheduler_service.stop_scheduler()
+                self.logger.info("Scheduler stopped")
+            
             self.logger.info("AnimeLoader server stopped")
 
 
