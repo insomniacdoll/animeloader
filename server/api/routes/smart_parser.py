@@ -12,7 +12,12 @@ from server.api.schemas.common import MessageResponse
 from server.api.auth import verify_api_key
 
 
-router = APIRouter(prefix="/smart-parser", tags=["智能解析"])
+# 在路由器级别添加认证依赖
+router = APIRouter(
+    prefix="/smart-parser",
+    tags=["智能解析"],
+    dependencies=[Depends(verify_api_key)]
+)
 
 
 def get_smart_parser_service() -> SmartParserService:
@@ -27,7 +32,6 @@ def get_smart_parser_service() -> SmartParserService:
     description="获取智能解析支持的动画网站列表"
 )
 def get_supported_sites(
-    api_key: str = Depends(verify_api_key),
     smart_parser_service: SmartParserService = Depends(get_smart_parser_service)
 ):
     """获取支持的网站列表"""
@@ -46,7 +50,6 @@ def get_supported_sites(
 )
 def parse_anime_link(
     request: SmartParseAnimeRequest,
-    api_key: str = Depends(verify_api_key),
     smart_parser_service: SmartParserService = Depends(get_smart_parser_service)
 ):
     """解析动画链接"""

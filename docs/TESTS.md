@@ -15,7 +15,8 @@ animeloader/
 │   └── test_api.py           # 服务端API测试 ✅
 ├── client/tests/              # 客户端测试
 │   ├── __init__.py
-│   └── test_smart_add.py     # 客户端智能添加测试 ✅
+│   ├── test_smart_add.py     # 客户端智能添加测试 ✅
+│   └── test_auth.py          # 客户端API认证测试 ✅
 └── run_tests.py              # 运行所有测试的脚本 ✅
 ```
 
@@ -156,6 +157,30 @@ python client/tests/test_smart_add.py
 
 **测试文件位置**：`server/tests/test_scheduler_service.py`
 
+### 9. 客户端API认证测试 (`test_auth.py`) ✅
+
+测试客户端API认证功能，包括：
+- 没有API密钥时访问API（应被拒绝）
+- 使用无效的API密钥访问API（应被拒绝）
+- 使用空的API密钥访问API（应被拒绝）
+- 使用有效的API密钥访问API（应成功）
+- 健康检查端点无需认证
+
+**运行条件**：需要先启动服务端
+
+**测试文件位置**：`client/tests/test_auth.py`
+
+**测试覆盖的API端点**：
+- GET /api/health（健康检查，无需认证）
+- GET /api/anime（获取动画列表）
+- POST /api/anime/smart-parse（智能解析动画）
+- GET /api/rss-sources（获取RSS源列表）
+- GET /api/links（获取链接列表）
+- GET /api/downloaders（获取下载器列表）
+- GET /api/downloads（获取下载任务列表）
+- GET /api/scheduler/jobs（获取调度任务）
+- GET /api/smart-parser/sites（获取支持的网站）
+
 ## 测试结果
 
 所有测试应通过，输出如下：
@@ -172,6 +197,7 @@ python client/tests/test_smart_add.py
 6. 调度服务测试: ✓ 通过
 7. 服务端API测试: ✓ 通过
 8. 客户端测试: ✓ 通过
+9. 客户端API认证测试: ✓ 通过
 
 ============================================================
 [成功] 所有测试通过
@@ -191,6 +217,7 @@ python client/tests/test_smart_add.py
 - ✅ **调度服务**：启动/停止调度器，添加/移除/暂停/恢复任务
 - ✅ **服务端API**：动画相关API、智能解析API、链接API、下载器API、下载API、调度API
 - ✅ **客户端命令**：智能添加命令
+- ✅ **API认证**：路由器级别依赖认证，验证API密钥有效性
 
 待测试的功能模块：
 
@@ -198,6 +225,38 @@ python client/tests/test_smart_add.py
 - 📋 **RSS源自动检查**
 - 📋 **链接自动下载**
 - 📋 **下载状态同步**
+
+## API认证说明
+
+服务端采用**路由器级别依赖**的方式实现API认证，类似Java Spring的AOP切面编程。所有需要认证的API路由在路由器级别统一添加认证依赖：
+
+```python
+# 在路由器级别添加认证依赖
+router = APIRouter(
+    prefix="/anime",
+    tags=["动画"],
+    dependencies=[Depends(verify_api_key)]  # 所有路由自动应用认证
+)
+
+# 无需在每个路由中添加api_key参数
+@router.get("")
+def get_animes(...):
+    pass
+```
+
+**认证流程**：
+1. 客户端在配置文件中设置 `api_key`
+2. 客户端发起API请求时，在请求头中携带 `X-API-Key`
+3. 服务端验证API密钥的有效性（是否激活、是否过期）
+4. 验证通过后，返回请求结果；验证失败返回 401 Unauthorized
+
+**注意事项**：
+- 健康检查端点 `/api/health` 无需认证
+- 初始部署时，系统会自动创建一个默认的API密钥
+- 服务端启动时会在日志中显示默认API密钥
+- 客户端必须配置有效的API密钥才能访问服务端API
+
+详细说明请参考 `docs/API_AUTH_PATTERNS.md`。
 
 ## 测试环境要求
 

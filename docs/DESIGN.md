@@ -598,6 +598,32 @@ X-API-Key: <your-api-key>
 
 初始部署时，系统会自动创建一个默认的 API 密钥，该密钥存储在数据库中，用户可以在客户端配置文件中使用该密钥。
 
+**认证实现方式：**
+
+服务端采用**路由器级别依赖**的方式实现API认证，类似Java Spring的AOP切面编程：
+
+```python
+# 在路由器级别添加认证依赖
+router = APIRouter(
+    prefix="/anime",
+    tags=["动画"],
+    dependencies=[Depends(verify_api_key)]  # 所有路由自动应用认证
+)
+
+# 无需在每个路由中添加api_key参数
+@router.get("")
+def get_animes(...):
+    pass
+```
+
+这种方式的优势：
+- 代码简洁，无需在每个路由中重复添加认证依赖
+- 易于维护，修改认证逻辑只需改动路由器配置
+- 灵活性高，不同路由器可以配置不同的认证策略
+- 完美集成FastAPI的依赖注入系统
+
+详细说明请参考 `docs/API_AUTH_PATTERNS.md`。
+
 **已实现的 API：**
 
 ```

@@ -17,7 +17,12 @@ from server.api.schemas import (
 from server.api.auth import verify_api_key
 
 
-router = APIRouter(prefix="/links", tags=["链接"])
+# 在路由器级别添加认证依赖
+router = APIRouter(
+    prefix="/links",
+    tags=["链接"],
+    dependencies=[Depends(verify_api_key)]
+)
 
 
 def get_link_service(db: Session = Depends(get_db)) -> LinkService:
@@ -32,7 +37,6 @@ def get_link_service(db: Session = Depends(get_db)) -> LinkService:
     description="获取所有链接，支持过滤"
 )
 def get_links(
-    api_key: str = Depends(verify_api_key),
     skip: int = Query(0, ge=0, description="跳过的记录数"),
     limit: int = Query(100, ge=1, le=1000, description="返回的记录数"),
     link_type: Optional[str] = Query(None, description="链接类型"),
@@ -67,7 +71,6 @@ def get_links(
 )
 def get_link(
     link_id: int,
-    api_key: str = Depends(verify_api_key),
     link_service: LinkService = Depends(get_link_service)
 ):
     """获取单个链接"""
@@ -89,7 +92,6 @@ def get_link(
 )
 def create_link(
     link_data: LinkCreate,
-    api_key: str = Depends(verify_api_key),
     link_service: LinkService = Depends(get_link_service)
 ):
     """创建链接"""
@@ -113,7 +115,6 @@ def create_link(
 def update_link(
     link_id: int,
     link_data: LinkUpdate,
-    api_key: str = Depends(verify_api_key),
     link_service: LinkService = Depends(get_link_service)
 ):
     """更新链接"""
@@ -138,7 +139,6 @@ def update_link(
 )
 def mark_link_as_downloaded(
     link_id: int,
-    api_key: str = Depends(verify_api_key),
     link_service: LinkService = Depends(get_link_service)
 ):
     """标记链接为已下载"""
@@ -159,7 +159,6 @@ def mark_link_as_downloaded(
 )
 def delete_link(
     link_id: int,
-    api_key: str = Depends(verify_api_key),
     link_service: LinkService = Depends(get_link_service)
 ):
     """删除链接"""

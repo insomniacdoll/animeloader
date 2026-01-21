@@ -91,6 +91,12 @@ def main():
             "客户端测试"
         ))
         
+        # 测试9: 客户端API认证测试
+        results.append(run_command(
+            f"{venv_python} client/tests/test_auth.py",
+            "客户端API认证测试"
+        ))
+        
     finally:
         # 停止服务端
         print(f"\n{'=' * 60}")
@@ -114,7 +120,8 @@ def main():
         "下载服务测试",
         "调度服务测试",
         "服务端API测试",
-        "客户端测试"
+        "客户端测试",
+        "客户端API认证测试"
     ]
     
     for i, (name, result) in enumerate(zip(test_names, results), 1):

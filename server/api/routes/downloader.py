@@ -19,7 +19,12 @@ from server.api.schemas import (
 from server.api.auth import verify_api_key
 
 
-router = APIRouter(prefix="/downloaders", tags=["下载器"])
+# 在路由器级别添加认证依赖
+router = APIRouter(
+    prefix="/downloaders",
+    tags=["下载器"],
+    dependencies=[Depends(verify_api_key)]
+)
 
 
 def get_downloader_service(db: Session = Depends(get_db)) -> DownloaderService:
@@ -34,7 +39,6 @@ def get_downloader_service(db: Session = Depends(get_db)) -> DownloaderService:
     description="获取所有下载器列表"
 )
 def get_downloaders(
-    api_key: str = Depends(verify_api_key),
     is_active: Optional[bool] = Query(None, description="是否激活"),
     downloader_type: Optional[str] = Query(None, description="下载器类型"),
     downloader_service: DownloaderService = Depends(get_downloader_service)
@@ -58,7 +62,6 @@ def get_downloaders(
 )
 def get_downloader(
     downloader_id: int,
-    api_key: str = Depends(verify_api_key),
     downloader_service: DownloaderService = Depends(get_downloader_service)
 ):
     """获取单个下载器"""
@@ -78,7 +81,6 @@ def get_downloader(
     description="获取默认下载器"
 )
 def get_default_downloader(
-    api_key: str = Depends(verify_api_key),
     downloader_service: DownloaderService = Depends(get_downloader_service)
 ):
     """获取默认下载器"""
@@ -98,7 +100,6 @@ def get_default_downloader(
     description="获取支持的下载器类型列表"
 )
 def get_downloader_types(
-    api_key: str = Depends(verify_api_key),
     downloader_service: DownloaderService = Depends(get_downloader_service)
 ):
     """获取支持的下载器类型"""
@@ -118,7 +119,6 @@ def get_downloader_types(
 )
 def create_downloader(
     downloader_data: DownloaderCreate,
-    api_key: str = Depends(verify_api_key),
     downloader_service: DownloaderService = Depends(get_downloader_service)
 ):
     """创建下载器"""
@@ -141,7 +141,6 @@ def create_downloader(
 def update_downloader(
     downloader_id: int,
     downloader_data: DownloaderUpdate,
-    api_key: str = Depends(verify_api_key),
     downloader_service: DownloaderService = Depends(get_downloader_service)
 ):
     """更新下载器"""
@@ -169,7 +168,6 @@ def update_downloader(
 )
 def set_default_downloader(
     downloader_id: int,
-    api_key: str = Depends(verify_api_key),
     downloader_service: DownloaderService = Depends(get_downloader_service)
 ):
     """设置为默认下载器"""
@@ -190,7 +188,6 @@ def set_default_downloader(
 )
 def test_downloader(
     downloader_id: int,
-    api_key: str = Depends(verify_api_key),
     downloader_service: DownloaderService = Depends(get_downloader_service)
 ):
     """测试下载器连接"""
@@ -211,7 +208,6 @@ def test_downloader(
 )
 def get_downloader_status(
     downloader_id: int,
-    api_key: str = Depends(verify_api_key),
     downloader_service: DownloaderService = Depends(get_downloader_service)
 ):
     """获取下载器状态"""
@@ -232,7 +228,6 @@ def get_downloader_status(
 )
 def delete_downloader(
     downloader_id: int,
-    api_key: str = Depends(verify_api_key),
     downloader_service: DownloaderService = Depends(get_downloader_service)
 ):
     """删除下载器"""

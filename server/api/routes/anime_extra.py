@@ -13,7 +13,12 @@ from server.api.schemas import (
 from server.api.auth import verify_api_key
 
 
-router = APIRouter(prefix="/anime", tags=["动画扩展"])
+# 在路由器级别添加认证依赖
+router = APIRouter(
+    prefix="/anime",
+    tags=["动画扩展"],
+    dependencies=[Depends(verify_api_key)]
+)
 
 
 def get_rss_service(db: Session = Depends(get_db)) -> RSSService:
@@ -29,7 +34,6 @@ def get_rss_service(db: Session = Depends(get_db)) -> RSSService:
 )
 def get_anime_rss_sources(
     anime_id: int,
-    api_key: str = Depends(verify_api_key),
     rss_service: RSSService = Depends(get_rss_service)
 ):
     """获取动画的所有RSS源"""

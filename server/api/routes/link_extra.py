@@ -14,7 +14,12 @@ from server.api.schemas import (
 from server.api.auth import verify_api_key
 
 
-router = APIRouter(prefix="/links", tags=["链接扩展"])
+# 在路由器级别添加认证依赖
+router = APIRouter(
+    prefix="/links",
+    tags=["链接扩展"],
+    dependencies=[Depends(verify_api_key)]
+)
 
 
 def get_download_service(db: Session = Depends(get_db)) -> DownloadService:
@@ -30,7 +35,6 @@ def get_download_service(db: Session = Depends(get_db)) -> DownloadService:
 )
 def get_link_downloads(
     link_id: int,
-    api_key: str = Depends(verify_api_key),
     download_service: DownloadService = Depends(get_download_service)
 ):
     """获取链接的下载任务"""

@@ -308,6 +308,7 @@ python client/tests/test_smart_add.py
 - ✅ 调度服务测试
 - ✅ 服务端 API 测试
 - ✅ 客户端智能添加测试
+- ✅ 客户端 API 认证测试
 
 ### 测试结果
 
@@ -325,6 +326,7 @@ python client/tests/test_smart_add.py
 6. 调度服务测试: ✓ 通过
 7. 服务端API测试: ✓ 通过
 8. 客户端测试: ✓ 通过
+9. 客户端API认证测试: ✓ 通过
 
 ============================================================
 [成功] 所有测试通过
@@ -377,6 +379,9 @@ smart_parser:
 server:
   url: "http://127.0.0.1:8000"
   timeout: 30
+  # API密钥（必填，用于身份验证）
+  # 请从服务端启动日志中获取默认API密钥
+  api_key: "35dddd59-65eb-42bc-963d-819ddbd54179"
 
 display:
   theme: "auto"
@@ -391,6 +396,8 @@ ui:
 logging:
   level: "INFO"
 ```
+
+**注意**：客户端必须配置有效的API密钥才能访问服务端API。服务端启动时会自动创建默认API密钥并在日志中显示。
 
 ---
 
