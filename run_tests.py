@@ -80,6 +80,13 @@ def main():
         "客户端API认证测试"
     ))
     
+    # 新增的客户端命令导入测试
+    # 测试9: 命令模块导入测试
+    results.append(run_command(
+        f"{venv_python} tests/test_commands_import.py",
+        "命令模块导入测试"
+    ))
+    
     # 汇总结果
     print(f"\n{'=' * 60}")
     print("测试结果汇总")
@@ -93,7 +100,8 @@ def main():
         "调度服务测试",
         "服务端API测试",
         "智能添加测试",
-        "客户端API认证测试"
+        "客户端API认证测试",
+        "命令模块导入测试"
     ]
     
     for i, (name, result) in enumerate(zip(test_names, results), 1):

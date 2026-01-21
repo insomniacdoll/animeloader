@@ -14,6 +14,11 @@ from rich.text import Text
 from client.api import APIClient
 from client.utils import config
 from client.commands.anime_commands import AnimeCommands
+from client.commands.rss_commands import RSSCommands
+from client.commands.link_commands import LinkCommands
+from client.commands.downloader_commands import DownloaderCommands
+from client.commands.download_commands import DownloadCommands
+from client.commands.status_commands import StatusCommands
 
 
 class AnimeLoaderCLI(cmd2.Cmd):
@@ -42,6 +47,11 @@ class AnimeLoaderCLI(cmd2.Cmd):
 
         # 初始化命令处理器
         self.anime_commands = AnimeCommands(self.api_client, self.console, self.config)
+        self.rss_commands = RSSCommands(self.api_client, self.console, self.config)
+        self.link_commands = LinkCommands(self.api_client, self.console, self.config)
+        self.downloader_commands = DownloaderCommands(self.api_client, self.console, self.config)
+        self.download_commands = DownloadCommands(self.api_client, self.console, self.config)
+        self.status_commands = StatusCommands(self.api_client, self.console, self.config)
     
     def _get_theme(self):
         theme_name = self.config.get('display.theme', 'auto')
@@ -108,24 +118,196 @@ class AnimeLoaderCLI(cmd2.Cmd):
     
     
     def do_rss(self, args):
-        """RSS源相关命令"""
-        self._print_info("RSS命令尚未实现")
+        """RSS源相关命令
+
+        子命令:
+          add         添加RSS源
+          list        列出RSS源
+          show        显示RSS源详情
+          update      更新RSS源
+          remove      删除RSS源
+          check       手动检查RSS源新链接
+        """
+        if not args:
+            self._print_info("请指定子命令: add, list, show, update, remove, check")
+            self._print_info("使用 'rss --help' 查看详细帮助")
+            return
+
+        # 解析子命令
+        parts = args.split(maxsplit=1)
+        subcommand = parts[0]
+        subcommand_args = parts[1] if len(parts) > 1 else ""
+
+        if subcommand == 'add':
+            self.rss_commands.add(subcommand_args)
+        elif subcommand == 'list':
+            self.rss_commands.list(subcommand_args)
+        elif subcommand == 'show':
+            self.rss_commands.show(subcommand_args)
+        elif subcommand == 'update':
+            self.rss_commands.update(subcommand_args)
+        elif subcommand == 'remove':
+            self.rss_commands.remove(subcommand_args)
+        elif subcommand == 'check':
+            self.rss_commands.check(subcommand_args)
+        elif subcommand in ['--help', '-h', 'help']:
+            self.rss_commands.help()
+        else:
+            self._print_error(f"未知的子命令: {subcommand}")
+            self._print_info("可用子命令: add, list, show, update, remove, check")
     
     def do_link(self, args):
-        """链接相关命令"""
-        self._print_info("链接命令尚未实现")
+        """链接相关命令
+
+        子命令:
+          list            列出链接
+          show            显示链接详情
+          mark-downloaded 标记链接为已下载
+        """
+        if not args:
+            self._print_info("请指定子命令: list, show, mark-downloaded")
+            self._print_info("使用 'link --help' 查看详细帮助")
+            return
+
+        # 解析子命令
+        parts = args.split(maxsplit=1)
+        subcommand = parts[0]
+        subcommand_args = parts[1] if len(parts) > 1 else ""
+
+        if subcommand == 'list':
+            self.link_commands.list(subcommand_args)
+        elif subcommand == 'show':
+            self.link_commands.show(subcommand_args)
+        elif subcommand == 'mark-downloaded':
+            self.link_commands.mark_downloaded(subcommand_args)
+        elif subcommand in ['--help', '-h', 'help']:
+            self.link_commands.help()
+        else:
+            self._print_error(f"未知的子命令: {subcommand}")
+            self._print_info("可用子命令: list, show, mark-downloaded")
     
     def do_downloader(self, args):
-        """下载器相关命令"""
-        self._print_info("下载器命令尚未实现")
+        """下载器相关命令
+
+        子命令:
+          add          添加下载器
+          list         列出下载器
+          show         显示下载器详情
+          update       更新下载器
+          remove       删除下载器
+          test         测试下载器连接
+          set-default  设置默认下载器
+          types        查看支持的下载器类型
+        """
+        if not args:
+            self._print_info("请指定子命令: add, list, show, update, remove, test, set-default, types")
+            self._print_info("使用 'downloader --help' 查看详细帮助")
+            return
+
+        # 解析子命令
+        parts = args.split(maxsplit=1)
+        subcommand = parts[0]
+        subcommand_args = parts[1] if len(parts) > 1 else ""
+
+        if subcommand == 'add':
+            self.downloader_commands.add(subcommand_args)
+        elif subcommand == 'list':
+            self.downloader_commands.list(subcommand_args)
+        elif subcommand == 'show':
+            self.downloader_commands.show(subcommand_args)
+        elif subcommand == 'update':
+            self.downloader_commands.update(subcommand_args)
+        elif subcommand == 'remove':
+            self.downloader_commands.remove(subcommand_args)
+        elif subcommand == 'test':
+            self.downloader_commands.test(subcommand_args)
+        elif subcommand == 'set-default':
+            self.downloader_commands.set_default(subcommand_args)
+        elif subcommand == 'types':
+            self.downloader_commands.types(subcommand_args)
+        elif subcommand in ['--help', '-h', 'help']:
+            self.downloader_commands.help()
+        else:
+            self._print_error(f"未知的子命令: {subcommand}")
+            self._print_info("可用子命令: add, list, show, update, remove, test, set-default, types")
     
     def do_download(self, args):
-        """下载相关命令"""
-        self._print_info("下载命令尚未实现")
+        """下载相关命令
+
+        子命令:
+          start   开始下载
+          list    列出下载任务
+          pause   暂停下载
+          resume  恢复下载
+          cancel  取消下载
+          status  查看下载状态
+          sync    同步下载状态
+          active  查看活跃的下载任务
+        """
+        if not args:
+            self._print_info("请指定子命令: start, list, pause, resume, cancel, status, sync, active")
+            self._print_info("使用 'download --help' 查看详细帮助")
+            return
+
+        # 解析子命令
+        parts = args.split(maxsplit=1)
+        subcommand = parts[0]
+        subcommand_args = parts[1] if len(parts) > 1 else ""
+
+        if subcommand == 'start':
+            self.download_commands.start(subcommand_args)
+        elif subcommand == 'list':
+            self.download_commands.list(subcommand_args)
+        elif subcommand == 'pause':
+            self.download_commands.pause(subcommand_args)
+        elif subcommand == 'resume':
+            self.download_commands.resume(subcommand_args)
+        elif subcommand == 'cancel':
+            self.download_commands.cancel(subcommand_args)
+        elif subcommand == 'status':
+            self.download_commands.status(subcommand_args)
+        elif subcommand == 'sync':
+            self.download_commands.sync(subcommand_args)
+        elif subcommand == 'active':
+            self.download_commands.active(subcommand_args)
+        elif subcommand in ['--help', '-h', 'help']:
+            self.download_commands.help()
+        else:
+            self._print_error(f"未知的子命令: {subcommand}")
+            self._print_info("可用子命令: start, list, pause, resume, cancel, status, sync, active")
     
     def do_status(self, args):
-        """状态查询命令"""
-        self._print_info("状态命令尚未实现")
+        """状态查询命令
+
+        子命令:
+          server    查看服务器状态
+          system    查看系统信息
+          scheduler 查看调度器状态
+          summary   查看系统摘要
+        """
+        if not args:
+            self._print_info("请指定子命令: server, system, scheduler, summary")
+            self._print_info("使用 'status --help' 查看详细帮助")
+            return
+
+        # 解析子命令
+        parts = args.split(maxsplit=1)
+        subcommand = parts[0]
+        subcommand_args = parts[1] if len(parts) > 1 else ""
+
+        if subcommand == 'server':
+            self.status_commands.server(subcommand_args)
+        elif subcommand == 'system':
+            self.status_commands.system(subcommand_args)
+        elif subcommand == 'scheduler':
+            self.status_commands.scheduler(subcommand_args)
+        elif subcommand == 'summary':
+            self.status_commands.summary(subcommand_args)
+        elif subcommand in ['--help', '-h', 'help']:
+            self.status_commands.help()
+        else:
+            self._print_error(f"未知的子命令: {subcommand}")
+            self._print_info("可用子命令: server, system, scheduler, summary")
     
     def do_config(self, args):
         """查看当前配置"""

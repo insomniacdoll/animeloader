@@ -1,0 +1,65 @@
+name: 运行全量测试
+
+on:
+  # 每天北京时间 02:00 运行（UTC 时间 18:00）
+  schedule:
+    - cron: '0 18 * * *'
+  
+  # 允许手动触发
+  workflow_dispatch:
+  
+  # 在 push 或 pull request 时也可以运行（可选）
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  test:
+    name: 运行测试套件
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.ref_name }}
+    
+    - name: 设置 Python 环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    
+    - name: 缓存虚拟环境
+      uses: actions/cache@v3
+      with:
+        path: venv
+        key: ${{ runner.os }}-venv-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-venv-
+    
+    - name: 创建虚拟环境
+      run: |
+        python3 -m venv venv
+        echo "$GITHUB_WORKSPACE/venv/bin" >> $GITHUB_PATH
+    
+    - name: 安装依赖
+      run: |
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: 运行测试
+      run: |
+        source venv/bin/activate
+        python run_tests.py
+    
+    - name: 上传测试报告
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-report
+        path: |
+          logs/
+          data/
+        retention-days: 7
