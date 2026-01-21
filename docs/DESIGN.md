@@ -8,9 +8,20 @@ animeloader 是一个用于订阅动画发布和管理动画下载内容的 Pyth
 
 > **注意**：本项目处于开发阶段，以下为核心功能的实现状态：
 >
-> - ✅ **已完成**：动画管理（添加、查询、更新、删除）、RSS源管理（添加、查询、更新、删除）、智能解析功能（蜜柑计划网站）、链接管理、下载器管理、下载任务管理、定时任务调度、基础API框架
+> - ✅ **已完成**：
+>   - 动画管理（添加、查询、更新、删除）
+>   - RSS源管理（添加、查询、更新、删除）
+>   - 智能解析功能（蜜柑计划网站）
+>   - 链接管理
+>   - 下载器管理
+>   - 下载任务管理
+>   - 定时任务调度
+>   - 基础API框架
+>   - API密钥认证（路由器级别依赖）
+>   - API密钥管理服务
+>   - 客户端 anime 命令（add、list、show、smart-add）
 > - 🚧 **开发中**：RSS源自动检查、链接自动下载、下载状态同步
-> - 📋 **计划中**：多下载器支持、命令行交互界面、API密钥认证
+> - 📋 **计划中**：多下载器支持、客户端其他命令（rss、link、downloader、download、status）
 
 ### 1.2 核心功能
 
@@ -28,8 +39,8 @@ animeloader 是一个用于订阅动画发布和管理动画下载内容的 Pyth
 - **下载任务管理**：针对每个链接创建下载任务，支持暂停、恢复、取消 ✅
 - **定时下载任务**：自动检测新发布的动画并下载 ✅
 - **下载状态监控**：实时查看下载进度和状态，支持同步外部下载器状态 ✅
-- **命令行交互**：提供友好的 CLI 界面进行操作 📋
-- **API密钥认证**：通过 API 密钥保护服务端接口，确保只有授权客户端才能访问 📋
+- **命令行交互**：提供友好的 CLI 界面进行操作（部分实现：anime 命令已完成）✅
+- **API密钥认证**：通过 API 密钥保护服务端接口，确保只有授权客户端才能访问 ✅
 
 ### 1.3 目标用户
 
@@ -142,7 +153,8 @@ animeloader/
 │   │   ├── rss_source.py # RSS源模型
 │   │   ├── link.py       # 链接模型
 │   │   ├── downloader.py # 下载器配置模型
-│   │   └── download.py   # 下载任务模型
+│   │   ├── download.py   # 下载任务模型
+│   │   └── api_key.py    # API密钥模型
 │   ├── services/         # 业务逻辑
 │   │   ├── __init__.py
 │   │   ├── rss_service.py        # RSS源管理服务
@@ -150,7 +162,8 @@ animeloader/
 │   │   ├── download_service.py   # 下载服务
 │   │   ├── downloader_service.py # 下载器管理服务
 │   │   ├── scheduler_service.py  # 调度服务
-│   │   └── smart_parser_service.py # 智能解析服务
+│   │   ├── smart_parser_service.py # 智能解析服务
+│   │   └── api_key_service.py    # API密钥管理服务
 │   ├── link_parsers/    # 链接解析器（可扩展）
 │   │   ├── __init__.py
 │   │   ├── base_parser.py      # 基础解析器
@@ -167,6 +180,7 @@ animeloader/
 │   │   └── pikpak_downloader.py # pikpak离线下载器
 │   ├── api/              # API 接口
 │   │   ├── __init__.py
+│   │   ├── auth.py       # API 认证依赖（路由器级别）
 │   │   ├── routes/       # API 路由（按模块拆分）
 │   │   │   ├── __init__.py
 │   │   │   ├── anime.py          # 动画相关路由
@@ -463,9 +477,7 @@ class APIKey:
 - `check_rss_source(rss_source_id, auto_download=False)` - 检查RSS源的新链接
 - `is_running()` - 检查调度器是否正在运行
 
-#### 4.2.8 APIKeyService (API密钥管理服务) 📋
-
-*计划中 - 功能尚未实现*
+#### 4.2.8 APIKeyService (API密钥管理服务) ✅
 
 - `create_api_key(name, description, expires_at=None)` - 创建新的API密钥
 - `get_api_key(api_key_id)` - 获取单个API密钥

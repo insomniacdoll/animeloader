@@ -27,7 +27,9 @@ AnimeLoader 是一个基于 Python 的动画订阅和下载管理系统，采用
 - ⏰ **定时任务调度**：自动检测新发布并下载
 - 📊 **下载状态监控**：实时查看下载进度和状态
 - 🖥️ **RESTful API**：提供完整的 REST API 接口
+- 🔐 **API 密钥认证**：基于 API 密钥的身份认证机制，保护服务端接口安全
 - 🧪 **完善测试**：包含完整的单元测试和集成测试
+- 📱 **命令行客户端**：基于 cmd2 和 rich 的交互式命令行界面
 
 ---
 
@@ -36,7 +38,7 @@ AnimeLoader 是一个基于 Python 的动画订阅和下载管理系统，采用
 ### 已完成 ✅
 
 - [x] 项目基础架构搭建
-- [x] 数据库模型设计（SQLite + SQLAlchemy）
+- [x] 数据库模型设计（SQLite + SQLAlchemy，包含 Anime、RSSSource、Link、Downloader、DownloadTask、APIKey）
 - [x] 动画管理服务（CRUD、搜索、过滤）
 - [x] RSS 源管理服务（CRUD、关联动画）
 - [x] 智能解析服务（蜜柑计划网站）
@@ -46,19 +48,23 @@ AnimeLoader 是一个基于 Python 的动画订阅和下载管理系统，采用
 - [x] 调度服务（定时任务管理）
 - [x] 基础 API 框架（FastAPI）
 - [x] 模块化路由和 Schemas 设计
-- [x] 完整的测试套件（8 个测试模块）
+- [x] 完整的测试套件（9 个测试模块）
 - [x] 客户端基础框架
+- [x] API 密钥认证（路由器级别依赖，类似 Java Spring AOP）
+- [x] API 密钥管理服务（创建、验证、更新、删除）
+- [x] 服务端所有 API 路由实现（anime、rss、link、downloader、download、scheduler、smart_parser、health）
+- [x] 客户端 anime 命令（add、list、show、smart-add）
 
 ### 开发中 🚧
 
 - [ ] RSS 源自动检查
 - [ ] 链接自动下载
 - [ ] 下载状态同步
-- [ ] 命令行交互界面实现
+- [ ] 客户端命令实现（rss、link、downloader、download、status）
 
 ### 计划中 📋
 
-- [ ] 多下载器真实实现
+- [ ] 多下载器真实实现（aria2、pikpak、qBittorrent）
 - [ ] Web 界面
 - [ ] 用户认证和权限管理
 - [ ] 移动端支持
@@ -137,7 +143,8 @@ animeloader/
 │   │   ├── rss_source.py # RSS源模型
 │   │   ├── link.py       # 链接模型
 │   │   ├── downloader.py # 下载器配置模型
-│   │   └── download.py   # 下载任务模型
+│   │   ├── download.py   # 下载任务模型
+│   │   └── api_key.py    # API密钥模型
 │   ├── services/         # 业务逻辑
 │   │   ├── anime_service.py       # 动画服务
 │   │   ├── rss_service.py         # RSS源服务
@@ -145,7 +152,8 @@ animeloader/
 │   │   ├── link_service.py        # 链接服务
 │   │   ├── downloader_service.py  # 下载器服务
 │   │   ├── download_service.py    # 下载服务
-│   │   └── scheduler_service.py   # 调度服务
+│   │   ├── scheduler_service.py   # 调度服务
+│   │   └── api_key_service.py     # API密钥管理服务
 │   ├── link_parsers/     # 链接解析器
 │   │   ├── base_parser.py      # 基础解析器
 │   │   ├── magnet_parser.py    # 磁力链接解析器
@@ -157,6 +165,7 @@ animeloader/
 │   │   └── base_downloader.py   # 基础下载器接口
 │   ├── api/              # API 接口（模块化设计）
 │   │   ├── __init__.py
+│   │   ├── auth.py       # API 认证依赖（路由器级别）
 │   │   ├── routes/       # API 路由（按模块拆分）
 │   │   │   ├── anime.py          # 动画相关路由
 │   │   │   ├── anime_extra.py    # 动画扩展路由
@@ -239,11 +248,6 @@ venv\Scripts\activate  # Windows
 pip install -r requirements.txt
 ```
 
-4. **初始化数据库**
-```bash
-python -m server.database.init_db
-```
-
 ### 启动服务端
 
 ```bash
@@ -255,6 +259,13 @@ python -m server.main --config /path/to/config.yaml
 ```
 
 服务端将在 `http://127.0.0.1:8000` 启动
+
+服务端启动时会自动：
+- 初始化数据库
+- 创建默认 API 密钥
+- 启动调度器
+
+**重要**：服务端启动后会在控制台显示默认 API 密钥，请记录此密钥并在客户端配置中使用。
 
 API 文档访问地址：
 - Swagger UI: http://127.0.0.1:8000/docs
@@ -414,13 +425,15 @@ logging:
 - ✅ 定时任务调度功能
 - ✅ 模块化 API 路由和 Schemas 设计
 - ✅ 完整的测试套件
+- ✅ API 密钥认证功能
+- ✅ 客户端 anime 命令实现
 
 ### v0.2.0（下一版本）
 
 - 🚧 RSS 源自动检查
 - 🚧 链接自动下载
 - 🚧 下载状态同步
-- 🚧 命令行界面实现（rss、link、downloader、download、status 命令）
+- 🚧 客户端命令实现（rss、link、downloader、download、status 命令）
 
 ### v0.3.0+（未来计划）
 

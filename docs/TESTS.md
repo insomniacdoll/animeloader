@@ -4,19 +4,20 @@
 
 ```
 animeloader/
-├── server/tests/              # 服务端测试
+├── tests/                    # 测试目录
 │   ├── __init__.py
+│   ├── test_base.py          # 测试基类
+│   ├── test_utils.py         # 工具函数测试 ✅
 │   ├── test_smart_parser.py  # 蜜柑计划解析器测试 ✅
 │   ├── test_smart_add.py     # 智能添加功能测试 ✅
 │   ├── test_link_service.py  # 链接服务测试 ✅
 │   ├── test_downloader_service.py  # 下载器服务测试 ✅
 │   ├── test_download_service.py    # 下载服务测试 ✅
 │   ├── test_scheduler_service.py   # 调度服务测试 ✅
-│   └── test_api.py           # 服务端API测试 ✅
-├── client/tests/              # 客户端测试
-│   ├── __init__.py
-│   ├── test_smart_add.py     # 客户端智能添加测试 ✅
-│   └── test_auth.py          # 客户端API认证测试 ✅
+│   ├── test_api.py           # 服务端API测试 ✅
+│   ├── test_auth.py          # API认证测试 ✅
+│   ├── test_rss_parser.py    # RSS解析器测试 ✅
+│   └── test_integration.py   # 集成测试 ✅
 └── run_tests.py              # 运行所有测试的脚本 ✅
 ```
 
@@ -32,26 +33,42 @@ python run_tests.py
 
 ### 单独运行测试
 
-#### 服务端测试
-
 ```bash
 # 蜜柑计划解析器测试（不需要服务端）
-python server/tests/test_smart_parser.py
+python tests/test_smart_parser.py
 
 # 智能添加功能测试（不需要服务端）
-python server/tests/test_smart_add.py
+python tests/test_smart_add.py
+
+# 链接服务测试（不需要服务端）
+python tests/test_link_service.py
+
+# 下载器服务测试（不需要服务端）
+python tests/test_downloader_service.py
+
+# 下载服务测试（不需要服务端）
+python tests/test_download_service.py
+
+# 调度服务测试（不需要服务端）
+python tests/test_scheduler_service.py
+
+# RSS解析器测试（不需要服务端）
+python tests/test_rss_parser.py
+
+# 工具函数测试（不需要服务端）
+python tests/test_utils.py
 
 # 服务端API测试（需要先启动服务端）
 python -m server.main --config server_config.yaml &
-python server/tests/test_api.py
-```
+python tests/test_api.py
 
-#### 客户端测试
-
-```bash
-# 客户端智能添加测试（需要先启动服务端）
+# API认证测试（需要先启动服务端）
 python -m server.main --config server_config.yaml &
-python client/tests/test_smart_add.py
+python tests/test_auth.py
+
+# 集成测试（需要先启动服务端）
+python -m server.main --config server_config.yaml &
+python tests/test_integration.py
 ```
 
 ## 测试说明
@@ -117,7 +134,7 @@ python client/tests/test_smart_add.py
 
 **运行条件**：无需启动服务端
 
-**测试文件位置**：`server/tests/test_link_service.py`
+**测试文件位置**：`tests/test_link_service.py`
 
 ### 6. 下载器服务测试 (`test_downloader_service.py`) ✅
 
@@ -130,7 +147,7 @@ python client/tests/test_smart_add.py
 
 **运行条件**：无需启动服务端
 
-**测试文件位置**：`server/tests/test_downloader_service.py`
+**测试文件位置**：`tests/test_downloader_service.py`
 
 ### 7. 下载服务测试 (`test_download_service.py`) ✅
 
@@ -143,7 +160,7 @@ python client/tests/test_smart_add.py
 
 **运行条件**：无需启动服务端
 
-**测试文件位置**：`server/tests/test_download_service.py`
+**测试文件位置**：`tests/test_download_service.py`
 
 ### 8. 调度服务测试 (`test_scheduler_service.py`) ✅
 
@@ -155,20 +172,39 @@ python client/tests/test_smart_add.py
 
 **运行条件**：无需启动服务端
 
-**测试文件位置**：`server/tests/test_scheduler_service.py`
+**测试文件位置**：`tests/test_scheduler_service.py`
 
-### 9. 客户端API认证测试 (`test_auth.py`) ✅
+### 9. RSS 解析器测试 (`test_rss_parser.py`) ✅
 
-测试客户端API认证功能，包括：
-- 没有API密钥时访问API（应被拒绝）
-- 使用无效的API密钥访问API（应被拒绝）
-- 使用空的API密钥访问API（应被拒绝）
-- 使用有效的API密钥访问API（应成功）
-- 健康检查端点无需认证
+测试 RSS 解析功能，包括：
+- 蜜柑计划 RSS 源解析
+- RSS 链接提取
+- 链接信息验证
+
+**运行条件**：无需启动服务端
+
+**测试文件位置**：`tests/test_rss_parser.py`
+
+### 10. 工具函数测试 (`test_utils.py`) ✅
+
+测试工具函数，包括：
+- 配置加载
+- 日志配置
+- 其他辅助函数
+
+**运行条件**：无需启动服务端
+
+**测试文件位置**：`tests/test_utils.py`
+
+### 11. 集成测试 (`test_integration.py`) ✅
+
+测试多个模块的集成功能，包括：
+- 端到端工作流程测试
+- 多个服务的协作测试
 
 **运行条件**：需要先启动服务端
 
-**测试文件位置**：`client/tests/test_auth.py`
+**测试文件位置**：`tests/test_integration.py`
 
 **测试覆盖的API端点**：
 - GET /api/health（健康检查，无需认证）
@@ -196,8 +232,10 @@ python client/tests/test_smart_add.py
 5. 下载服务测试: ✓ 通过
 6. 调度服务测试: ✓ 通过
 7. 服务端API测试: ✓ 通过
-8. 客户端测试: ✓ 通过
-9. 客户端API认证测试: ✓ 通过
+8. API认证测试: ✓ 通过
+9. RSS解析器测试: ✓ 通过
+10. 工具函数测试: ✓ 通过
+11. 集成测试: ✓ 通过
 
 ============================================================
 [成功] 所有测试通过
