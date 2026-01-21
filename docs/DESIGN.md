@@ -384,7 +384,7 @@ class APIKey:
 
 - `create_anime(title, title_en, description, cover_url, status, total_episodes)` - 创建动画记录
 - `get_anime(anime_id)` - 获取单个动画
-- `get_animes(skip, limit, search, status)` - 获取动画列表，支持搜索和过滤
+- `get_animes(page, size, search, status)` - 获取动画列表，支持搜索和过滤
 - `update_anime(anime_id, **kwargs)` - 更新动画信息
 - `delete_anime(anime_id)` - 删除动画
 - `count_animes(search, status)` - 统计动画数量
@@ -409,12 +409,13 @@ class APIKey:
 #### 4.2.4 LinkService (链接管理服务) ✅
 
 - `add_link(rss_source_id, episode_number, episode_title, link_type, url, **kwargs)` - 添加链接
-- `get_links(skip, limit, is_downloaded=None, link_type=None, rss_source_id=None)` - 获取链接列表，支持过滤
+- `get_links(page, size, is_downloaded=None, link_type=None, rss_source_id=None)` - 获取链接列表，支持过滤
 - `get_link(link_id)` - 获取单个链接
 - `mark_as_downloaded(link_id)` - 标记链接为已下载
 - `update_link_status(link_id, is_available)` - 更新链接可用状态
 - `get_available_links(rss_source_id)` - 获取可用的下载链接
-- `filter_links_by_type(rss_source_id, link_type)` - 按链接类型过滤
+- `filter_links_by_type(rss_source_id, link_type, page, size)` - 按链接类型过滤
+- `get_all_links(page, size, link_type=None, is_downloaded=None)` - 获取所有链接（支持全局过滤）
 - `count_links(rss_source_id=None, is_downloaded=None, link_type=None)` - 统计链接数量
 - `delete_link(link_id)` - 删除链接
 
@@ -426,7 +427,7 @@ class APIKey:
 - `resume_download(task_id)` - 恢复下载
 - `cancel_download(task_id)` - 取消下载
 - `get_download_status(task_id)` - 获取下载状态
-- `get_download_tasks(skip, limit, rss_source_id=None, link_id=None, status=None)` - 获取下载任务列表，支持过滤
+- `get_download_tasks(page, size, rss_source_id=None, link_id=None, status=None)` - 获取下载任务列表，支持过滤
 - `get_download_task(task_id)` - 获取单个下载任务
 - `get_download_tasks_by_link(link_id)` - 获取链接的所有下载任务
 - `get_active_downloads()` - 获取所有活跃的下载任务

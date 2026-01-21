@@ -50,21 +50,24 @@ def get_smart_parser_service() -> SmartParserService:
     description="获取动画列表，支持搜索和过滤"
 )
 def get_animes(
-    skip: int = Query(0, ge=0, description="跳过的记录数"),
-    limit: int = Query(100, ge=1, le=1000, description="返回的记录数"),
+    page: int = Query(1, ge=1, description="页码（从1开始）"),
+    size: int = Query(20, ge=1, le=100, description="每页记录数"),
     search: Optional[str] = Query(None, description="搜索关键词（标题、英文标题、描述）"),
     status: Optional[str] = Query(None, description="状态过滤 (ongoing, completed, etc.)"),
     anime_service: AnimeService = Depends(get_anime_service)
 ):
     """获取动画列表"""
     total = anime_service.count_animes(search=search, status=status)
-    animes = anime_service.get_animes(skip=skip, limit=limit, search=search, status=status)
+    animes = anime_service.get_animes(page=page, size=size, search=search, status=status)
+    
+    # 计算skip用于响应
+    skip = (page - 1) * size
     
     return AnimeListResponse(
         total=total,
         items=[AnimeResponse.model_validate(anime) for anime in animes],
         skip=skip,
-        limit=limit
+        limit=size
     )
 
 

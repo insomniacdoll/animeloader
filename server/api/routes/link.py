@@ -37,8 +37,8 @@ def get_link_service(db: Session = Depends(get_db)) -> LinkService:
     description="获取所有链接，支持过滤"
 )
 def get_links(
-    skip: int = Query(0, ge=0, description="跳过的记录数"),
-    limit: int = Query(100, ge=1, le=1000, description="返回的记录数"),
+    page: int = Query(1, ge=1, description="页码（从1开始）"),
+    size: int = Query(20, ge=1, le=100, description="每页记录数"),
     link_type: Optional[str] = Query(None, description="链接类型"),
     is_downloaded: Optional[bool] = Query(None, description="是否已下载"),
     link_service: LinkService = Depends(get_link_service)
@@ -49,17 +49,20 @@ def get_links(
         is_downloaded=is_downloaded
     )
     links = link_service.get_all_links(
-        skip=skip,
-        limit=limit,
+        page=page,
+        size=size,
         link_type=link_type,
         is_downloaded=is_downloaded
     )
+    
+    # 计算skip用于响应
+    skip = (page - 1) * size
     
     return LinkListResponse(
         total=total,
         items=[LinkResponse.model_validate(link) for link in links],
         skip=skip,
-        limit=limit
+        limit=size
     )
 
 

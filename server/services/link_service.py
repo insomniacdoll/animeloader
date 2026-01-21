@@ -53,8 +53,8 @@ class LinkService:
         rss_source_id: int,
         is_downloaded: Optional[bool] = None,
         link_type: Optional[str] = None,
-        skip: int = 0,
-        limit: int = 100
+        page: int = 1,
+        size: int = 20
     ) -> List[Link]:
         """获取RSS源的所有链接，支持过滤"""
         query = self.db.query(Link).filter(Link.rss_source_id == rss_source_id)
@@ -70,8 +70,9 @@ class LinkService:
         # 排序：按集数降序
         query = query.order_by(Link.episode_number.desc())
         
-        # 分页
-        query = query.offset(skip).limit(limit)
+        # 分页：page从1开始，计算offset
+        offset = (page - 1) * size
+        query = query.offset(offset).limit(size)
         
         return query.all()
     
@@ -140,16 +141,20 @@ class LinkService:
         self,
         rss_source_id: int,
         link_type: str,
-        skip: int = 0,
-        limit: int = 100
+        page: int = 1,
+        size: int = 20
     ) -> List[Link]:
         """按链接类型过滤"""
-        return self.db.query(Link).filter(
+        query = self.db.query(Link).filter(
             and_(
                 Link.rss_source_id == rss_source_id,
                 Link.link_type == link_type
             )
-        ).order_by(Link.episode_number.desc()).offset(skip).limit(limit).all()
+        ).order_by(Link.episode_number.desc())
+        
+        # 分页：page从1开始，计算offset
+        offset = (page - 1) * size
+        return query.offset(offset).limit(size).all()
     
     def delete_link(self, link_id: int) -> bool:
         """删除链接"""
@@ -163,8 +168,8 @@ class LinkService:
     
     def get_all_links(
         self,
-        skip: int = 0,
-        limit: int = 100,
+        page: int = 1,
+        size: int = 20,
         link_type: Optional[str] = None,
         is_downloaded: Optional[bool] = None
     ) -> List[Link]:
@@ -177,6 +182,8 @@ class LinkService:
         if is_downloaded is not None:
             query = query.filter(Link.is_downloaded == is_downloaded)
         
-        query = query.order_by(Link.publish_date.desc()).offset(skip).limit(limit)
+        query = query.order_by(Link.publish_date.desc())
         
-        return query.all()
+        # 分页：page从1开始，计算offset
+        offset = (page - 1) * size
+        return query.offset(offset).limit(size).all()

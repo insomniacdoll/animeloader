@@ -44,8 +44,8 @@ class AnimeService:
     
     def get_animes(
         self,
-        skip: int = 0,
-        limit: int = 100,
+        page: int = 1,
+        size: int = 20,
         search: Optional[str] = None,
         status: Optional[str] = None
     ) -> List[Anime]:
@@ -67,8 +67,9 @@ class AnimeService:
         if status:
             query = query.filter(Anime.status == status)
         
-        # 分页
-        query = query.offset(skip).limit(limit)
+        # 分页：page从1开始，计算offset
+        offset = (page - 1) * size
+        query = query.offset(offset).limit(size)
         
         return query.all()
     

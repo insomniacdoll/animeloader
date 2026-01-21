@@ -82,8 +82,8 @@ class DownloadService:
         self,
         rss_source_id: Optional[int] = None,
         status: Optional[str] = None,
-        skip: int = 0,
-        limit: int = 100
+        page: int = 1,
+        size: int = 20
     ) -> List[DownloadTask]:
         """获取下载任务列表，支持过滤"""
         query = self.db.query(DownloadTask)
@@ -94,9 +94,11 @@ class DownloadService:
         if status is not None:
             query = query.filter(DownloadTask.status == status)
         
-        query = query.order_by(DownloadTask.created_at.desc()).offset(skip).limit(limit)
+        query = query.order_by(DownloadTask.created_at.desc())
         
-        return query.all()
+        # 分页：page从1开始，计算offset
+        offset = (page - 1) * size
+        return query.offset(offset).limit(size).all()
     
     def get_download_tasks_by_link(self, link_id: int) -> List[DownloadTask]:
         """获取链接的所有下载任务"""

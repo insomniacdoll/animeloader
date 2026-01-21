@@ -39,8 +39,8 @@ def get_download_service(db: Session = Depends(get_db)) -> DownloadService:
 def get_downloads(
     rss_source_id: Optional[int] = Query(None, description="RSS源ID"),
     status: Optional[str] = Query(None, description="任务状态"),
-    skip: int = Query(0, ge=0, description="跳过的记录数"),
-    limit: int = Query(100, ge=1, le=1000, description="返回的记录数"),
+    page: int = Query(1, ge=1, description="页码（从1开始）"),
+    size: int = Query(20, ge=1, le=100, description="每页记录数"),
     download_service: DownloadService = Depends(get_download_service)
 ):
     """获取所有下载任务"""
@@ -51,15 +51,18 @@ def get_downloads(
     tasks = download_service.get_download_tasks(
         rss_source_id=rss_source_id,
         status=status,
-        skip=skip,
-        limit=limit
+        page=page,
+        size=size
     )
+    
+    # 计算skip用于响应
+    skip = (page - 1) * size
     
     return DownloadTaskListResponse(
         total=total,
         items=[DownloadTaskResponse.model_validate(task) for task in tasks],
         skip=skip,
-        limit=limit
+        limit=size
     )
 
 
