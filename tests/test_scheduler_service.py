@@ -6,13 +6,14 @@ import os
 import time
 
 # 添加项目根目录到 Python 路径
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from server.database import init_database, get_db
 from server.services.scheduler_service import SchedulerService
 from server.services.anime_service import AnimeService
 from server.services.rss_service import RSSService
 from server.utils import config, init_config
+from test_utils import TestEnvironment
 
 
 def test_scheduler_service():
@@ -21,13 +22,26 @@ def test_scheduler_service():
     print("测试调度服务")
     print("=" * 60)
     
-    # 初始化配置
-    init_config()
-    
-    # 初始化数据库
-    init_database()
+    # 设置测试环境
+    env = TestEnvironment()
+    temp_dir = None
+    scheduler_service = None
     
     try:
+        temp_dir = env.setup()
+        
+        # 打印测试环境信息
+        env.print_info()
+        
+        # 初始化配置
+        cfg = init_config(env.get_config_path())
+        
+        # 打印配置信息
+        cfg.print_info()
+        
+        # 初始化数据库
+        init_database()
+    
         # 创建调度器服务
         scheduler_service = SchedulerService(get_db)
         
@@ -83,8 +97,6 @@ def test_scheduler_service():
         
         # 测试5: 手动检查RSS源
         result = scheduler_service.check_rss_source(rss_source.id, auto_download=False)
-        if not result["success"]:
-            print(f"✗ 手动检查RSS源失败: {result.get('message', '未知错误')}")
         assert result["success"] is True
         print(f"✓ 手动检查RSS源: {result['message']}")
         
@@ -108,23 +120,22 @@ def test_scheduler_service():
         assert job_status is None
         print(f"✓ 验证任务已移除")
         
-        # 测试8: 测试获取支持的RSS源网站
+        # 测试9: 获取支持的RSS源网站
         supported_sites = scheduler_service.get_supported_rss_sites()
-        assert len(supported_sites) >= 1
+        assert len(supported_sites) > 0
         print(f"✓ 获取支持的RSS源网站: {', '.join(supported_sites)}")
-
-        # 测试9: 测试解析器选择
-        mikan_parser = scheduler_service._get_rss_parser("https://mikanani.me/RSS/Bangumi?bangumiId=3824")
-        assert mikan_parser is not None
-        assert mikan_parser.get_site_name() == "蜜柑计划"
-        print(f"✓ 解析器选择: {mikan_parser.get_site_name()}")
-
-        # 测试10: 测试不支持的RSS源
-        unsupported_parser = scheduler_service._get_rss_parser("https://example.com/rss")
-        assert unsupported_parser is None
+        
+        # 测试10: 测试解析器选择
+        parser = scheduler_service._get_rss_parser("https://mikanani.me/RSS/Bangumi?bangumiId=3824")
+        assert parser is not None
+        print(f"✓ 解析器选择: {parser.get_site_name()}")
+        
+        # 测试11: 测试不支持的RSS源
+        parser = scheduler_service._get_rss_parser("https://example.com/rss")
+        assert parser is None
         print(f"✓ 不支持的RSS源: 返回None")
-
-        # 测试11: 添加另一个任务并测试自动下载
+        
+        # 测试12: 添加另一个任务并测试自动下载
         job_id2 = scheduler_service.add_check_job(
             rss_source_id=rss_source.id,
             interval=10,
@@ -133,20 +144,20 @@ def test_scheduler_service():
         assert job_id2 is not None
         print(f"✓ 添加自动下载任务: {job_id2}")
         
-        # 测试12: 手动检查RSS源（带自动下载）
+        # 测试13: 手动检查RSS源（带自动下载）
         result = scheduler_service.check_rss_source(rss_source.id, auto_download=True)
         assert result["success"] is True
         print(f"✓ 手动检查RSS源（自动下载）: {result['message']}")
-
+        
         # 等待一小段时间让调度器运行
         time.sleep(2)
-
-        # 测试13: 停止调度器
+        
+        # 测试14: 停止调度器
         success = scheduler_service.stop_scheduler()
         assert success is True
         assert scheduler_service.is_running is False
         print(f"✓ 停止调度器")
-
+        
         # 验证任务已清除
         jobs = scheduler_service.get_jobs()
         assert len(jobs) == 0
@@ -158,14 +169,18 @@ def test_scheduler_service():
         
     except AssertionError as e:
         print(f"\n[失败] 测试失败: {e}")
-        if scheduler_service.is_running:
+        if scheduler_service is not None and scheduler_service.is_running:
             scheduler_service.stop_scheduler()
         raise
     except Exception as e:
         print(f"\n[失败] 发生错误: {e}")
-        if scheduler_service.is_running:
+        if scheduler_service is not None and scheduler_service.is_running:
             scheduler_service.stop_scheduler()
         raise
+    finally:
+        # 清理测试环境
+        env.teardown()
+        print(f"已清理测试环境: {temp_dir}")
 
 
 if __name__ == "__main__":

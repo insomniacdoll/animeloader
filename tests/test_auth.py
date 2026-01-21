@@ -3,26 +3,28 @@
 """
 测试客户端API认证功能
 验证没有API密钥或无效API密钥时无法访问API
+使用测试隔离环境
 """
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from client.api.client import APIClient
 from rich.console import Console
 from rich.table import Table
+from tests.test_utils import TestEnvironment
 
 
-def get_default_api_key():
+def get_default_api_key(env: TestEnvironment):
     """获取默认API密钥"""
     try:
-        from server.utils.config import init_config
+        from server.utils import init_config
         from server.database import get_db, get_engine
         from server.services.api_key_service import APIKeyService
         from server.models import Base
         
-        # 初始化配置
-        init_config()
+        # 初始化配置（使用测试环境的配置文件）
+        init_config(env.get_config_path())
         
         # 初始化数据库
         engine = get_engine()
@@ -41,7 +43,7 @@ def get_default_api_key():
         return None
 
 
-def test_no_api_key():
+def test_no_api_key(env: TestEnvironment):
     """测试没有API密钥时访问API"""
     console = Console()
     
@@ -50,7 +52,7 @@ def test_no_api_key():
     console.print("=" * 70)
     
     # 创建没有API密钥的客户端
-    api_client = APIClient(base_url="http://127.0.0.1:8000", api_key=None)
+    api_client = APIClient(base_url=env.get_server_url(), api_key=None)
     
     # 测试各种API端点（健康检查不需要认证）
     test_cases = [
@@ -66,6 +68,7 @@ def test_no_api_key():
     ]
     
     results = []
+    all_passed = True
     for method, endpoint, description, requires_auth in test_cases:
         try:
             if method == "GET":
@@ -118,7 +121,6 @@ def test_no_api_key():
     table.add_column("结果", style="green")
     table.add_column("错误信息", style="yellow")
     
-    all_passed = True
     for description, status, error in results:
         color = "green" if "成功" in status else "red"
         table.add_row(description, f"[{color}]{status}[/{color}]", error[:50] + "..." if len(error) > 50 else error)
@@ -136,7 +138,7 @@ def test_no_api_key():
     return all_passed
 
 
-def test_invalid_api_key():
+def test_invalid_api_key(env: TestEnvironment):
     """测试无效的API密钥"""
     console = Console()
     
@@ -146,7 +148,7 @@ def test_invalid_api_key():
     
     # 创建使用无效API密钥的客户端
     invalid_api_key = "00000000-0000-0000-0000-000000000000"
-    api_client = APIClient(base_url="http://127.0.0.1:8000", api_key=invalid_api_key)
+    api_client = APIClient(base_url=env.get_server_url(), api_key=invalid_api_key)
     
     console.print(f"使用的无效API密钥: {invalid_api_key}")
     console.print()
@@ -159,6 +161,7 @@ def test_invalid_api_key():
     ]
     
     results = []
+    all_passed = True
     for method, endpoint, description in test_cases:
         try:
             if method == "GET":
@@ -172,11 +175,14 @@ def test_invalid_api_key():
             else:
                 status = "✗ 失败（应该被拒绝）"
                 results.append((description, status, "请求成功但应该被拒绝"))
+                all_passed = False
         except Exception as e:
             error_str = str(e)
             success = '401' in error_str or 'Unauthorized' in error_str
             status = "✓ 成功拒绝" if success else "✗ 错误"
             results.append((description, status, error_str))
+            if not success:
+                all_passed = False
     
     # 显示结果
     table = Table(title="测试结果")
@@ -184,7 +190,6 @@ def test_invalid_api_key():
     table.add_column("结果", style="green")
     table.add_column("错误信息", style="yellow")
     
-    all_passed = True
     for description, status, error in results:
         color = "green" if "成功" in status else "red"
         table.add_row(description, f"[{color}]{status}[/{color}]", error[:50] + "..." if len(error) > 50 else error)
@@ -202,7 +207,7 @@ def test_invalid_api_key():
     return all_passed
 
 
-def test_valid_api_key():
+def test_valid_api_key(env: TestEnvironment):
     """测试有效的API密钥"""
     console = Console()
     
@@ -211,7 +216,7 @@ def test_valid_api_key():
     console.print("=" * 70)
     
     # 获取有效的API密钥
-    api_key = get_default_api_key()
+    api_key = get_default_api_key(env)
     
     if not api_key:
         console.print("[red]✗[/red] 无法获取有效的API密钥")
@@ -222,7 +227,7 @@ def test_valid_api_key():
     console.print()
     
     # 创建使用有效API密钥的客户端
-    api_client = APIClient(base_url="http://127.0.0.1:8000", api_key=api_key)
+    api_client = APIClient(base_url=env.get_server_url(), api_key=api_key)
     
     # 测试各种API端点
     test_cases = [
@@ -233,6 +238,7 @@ def test_valid_api_key():
     ]
     
     results = []
+    all_passed = True
     for method, endpoint, description in test_cases:
         try:
             if method == "GET":
@@ -242,6 +248,7 @@ def test_valid_api_key():
             if 'error' in response:
                 status = "✗ 失败"
                 results.append((description, status, response.get('error', 'Unknown error')))
+                all_passed = False
             else:
                 status = "✓ 成功"
                 # 显示响应摘要
@@ -255,6 +262,7 @@ def test_valid_api_key():
         except Exception as e:
             status = "✗ 失败"
             results.append((description, status, str(e)))
+            all_passed = False
     
     # 显示结果
     table = Table(title="测试结果")
@@ -262,7 +270,6 @@ def test_valid_api_key():
     table.add_column("结果", style="green")
     table.add_column("响应", style="yellow")
     
-    all_passed = True
     for description, status, response in results:
         color = "green" if "成功" in status else "red"
         table.add_row(description, f"[{color}]{status}[/{color}]", response[:50] + "..." if len(response) > 50 else response)
@@ -280,7 +287,7 @@ def test_valid_api_key():
     return all_passed
 
 
-def test_empty_api_key():
+def test_empty_api_key(env: TestEnvironment):
     """测试空的API密钥"""
     console = Console()
     
@@ -289,7 +296,7 @@ def test_empty_api_key():
     console.print("=" * 70)
     
     # 创建使用空API密钥的客户端
-    api_client = APIClient(base_url="http://127.0.0.1:8000", api_key="")
+    api_client = APIClient(base_url=env.get_server_url(), api_key="")
     
     console.print("使用的空API密钥: \"\"\"")
     console.print()
@@ -321,60 +328,76 @@ def test_empty_api_key():
 
 def main():
     """运行所有认证测试"""
-    console = Console()
-    
-    console.print("\n")
-    console.print("=" * 70)
-    console.print("客户端API认证测试")
-    console.print("=" * 70)
-    console.print()
-    
-    # 运行所有测试
-    test_results = []
-    
-    # 测试1: 没有API密钥
-    test_results.append(("没有API密钥", test_no_api_key()))
-    
-    # 测试2: 无效的API密钥
-    test_results.append(("无效的API密钥", test_invalid_api_key()))
-    
-    # 测试3: 空的API密钥
-    test_results.append(("空的API密钥", test_empty_api_key()))
-    
-    # 测试4: 有效的API密钥
-    test_results.append(("有效的API密钥", test_valid_api_key()))
-    
-    # 显示汇总结果
-    console.print("=" * 70)
-    console.print("测试结果汇总")
-    console.print("=" * 70)
-    
-    table = Table()
-    table.add_column("测试项", style="cyan")
-    table.add_column("结果", style="green")
-    
-    all_passed = True
-    for test_name, result in test_results:
-        status = "✓ 通过" if result else "✗ 失败"
-        color = "green" if result else "red"
-        table.add_row(test_name, f"[{color}]{status}[/{color}]")
-        if not result:
-            all_passed = False
-    
-    console.print(table)
-    
-    if all_passed:
-        console.print("\n" + "=" * 70)
-        console.print("[green][成功] 所有认证测试通过[/green]")
+    env = TestEnvironment()
+    try:
+        env.setup()
+        
+        # 启动服务端
+        if not env.start_server():
+            print("✗ 服务端启动失败")
+            return 1
+        
+        console = Console()
+        
+        console.print("\n")
+        console.print("=" * 70)
+        console.print("客户端API认证测试")
         console.print("=" * 70)
         console.print()
-        return 0
-    else:
-        console.print("\n" + "=" * 70)
-        console.print("[red][失败] 部分认证测试未通过[/red]")
+        
+        # 运行所有测试
+        test_results = []
+        
+        # 测试1: 没有API密钥
+        test_results.append(("没有API密钥", test_no_api_key(env)))
+        
+        # 测试2: 无效的API密钥
+        test_results.append(("无效的API密钥", test_invalid_api_key(env)))
+        
+        # 测试3: 空的API密钥
+        test_results.append(("空的API密钥", test_empty_api_key(env)))
+        
+        # 测试4: 有效的API密钥
+        test_results.append(("有效的API密钥", test_valid_api_key(env)))
+        
+        # 显示汇总结果
         console.print("=" * 70)
-        console.print()
+        console.print("测试结果汇总")
+        console.print("=" * 70)
+        
+        table = Table()
+        table.add_column("测试项", style="cyan")
+        table.add_column("结果", style="green")
+        
+        all_passed = True
+        for test_name, result in test_results:
+            status = "✓ 通过" if result else "✗ 失败"
+            color = "green" if result else "red"
+            table.add_row(test_name, f"[{color}]{status}[/{color}]")
+            if not result:
+                all_passed = False
+        
+        console.print(table)
+        
+        if all_passed:
+            console.print("\n" + "=" * 70)
+            console.print("[green][成功] 所有认证测试通过[/green]")
+            console.print("=" * 70)
+            console.print()
+            return 0
+        else:
+            console.print("\n" + "=" * 70)
+            console.print("[red][失败] 部分认证测试未通过[/red]")
+            console.print("=" * 70)
+            console.print()
+            return 1
+    except Exception as e:
+        print(f"\n[失败] 发生错误: {e}")
+        import traceback
+        traceback.print_exc()
         return 1
+    finally:
+        env.teardown()
 
 
 if __name__ == '__main__':

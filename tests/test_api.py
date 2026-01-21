@@ -2,26 +2,26 @@
 # -*- coding: utf-8 -*-
 """
 测试服务端API功能
+使用测试隔离环境
 """
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import requests
+from tests.test_utils import TestEnvironment
 
 
-def get_default_api_key(base_url):
+def get_default_api_key(env: TestEnvironment):
     """获取默认API密钥"""
     try:
-        # 初始化配置
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
-        from server.utils.config import init_config
+        from server.utils import init_config
         from server.database import get_db, get_engine
         from server.services.api_key_service import APIKeyService
         from server.models import Base
         
-        # 初始化配置
-        init_config()
+        # 初始化配置（使用测试环境的配置文件）
+        init_config(env.get_config_path())
         
         # 初始化数据库
         engine = get_engine()
@@ -42,18 +42,26 @@ def get_default_api_key(base_url):
         return None
 
 
-def test_server_api():
+def test_server_api(env: TestEnvironment):
     """测试服务端API"""
     print("=" * 60)
     print("测试服务端API")
     print("=" * 60)
-
-    base_url = "http://127.0.0.1:8000"
+    
+    # 打印测试环境信息
+    env.print_info()
+    
+    # 启动服务端
+    if not env.start_server():
+        print("✗ 服务端启动失败")
+        return False
+    
+    base_url = env.get_server_url()
     headers = {}
-
+    
     # 获取API密钥
     print("\n0. 获取默认API密钥...")
-    api_key = get_default_api_key(base_url)
+    api_key = get_default_api_key(env)
     if api_key:
         headers['X-API-Key'] = api_key
         print(f"✓ 获取API密钥成功: {api_key}")
@@ -72,7 +80,6 @@ def test_server_api():
             return False
     except Exception as e:
         print(f"✗ 健康检查失败: {e}")
-        print("\n提示: 请先启动服务端: python -m server.main")
         return False
     
     # 测试智能解析
@@ -108,8 +115,10 @@ def test_server_api():
         response = requests.post(
             f"{base_url}/api/anime/smart-add",
             json={
-                "url": test_url,
-                "auto_add_rss": False
+                'url': test_url,
+                'auto_add_rss': False,
+                'anime_index': 1,
+                'rss_indices': []
             },
             headers=headers,
             timeout=30
@@ -118,8 +127,7 @@ def test_server_api():
             data = response.json()
             print("✓ 智能添加成功")
             anime = data.get('anime', {})
-            print(f"  动画ID: {anime.get('id')}")
-            print(f"  标题: {anime.get('title')}")
+            print(f"  标题: {anime.get('title', '')}")
             print(f"  RSS源数: {len(data.get('rss_sources', []))}")
         else:
             print(f"✗ 智能添加失败: {response.status_code}")
@@ -167,6 +175,21 @@ def test_server_api():
     return True
 
 
+def main():
+    """主函数"""
+    env = TestEnvironment()
+    try:
+        env.setup()
+        success = test_server_api(env)
+        return 0 if success else 1
+    except Exception as e:
+        print(f"\n[失败] 发生错误: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
+    finally:
+        env.teardown()
+
+
 if __name__ == '__main__':
-    success = test_server_api()
-    sys.exit(0 if success else 1)
+    sys.exit(main())

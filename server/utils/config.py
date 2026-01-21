@@ -61,6 +61,19 @@ class Config:
     
     def reload(self) -> None:
         self.config = self._load_config()
+    
+    def print_info(self):
+        """打印当前配置信息"""
+        print("\n" + "=" * 60)
+        print("当前配置信息")
+        print("=" * 60)
+        print(f"配置文件: {self.config_path}")
+        print(f"服务端地址: {self.get('server.host')}:{self.get('server.port')}")
+        print(f"数据库路径: {self.get_path('database.path')}")
+        print(f"日志文件: {self.get_path('logging.file')}")
+        print(f"日志级别: {self.get('logging.level')}")
+        print(f"调度器启用: {self.get('scheduler.enabled')}")
+        print("=" * 60 + "\n")
 
 
 # 全局配置实例（将在 main() 中初始化）
