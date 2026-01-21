@@ -31,7 +31,7 @@ jobs:
         python-version: '3.12'
     
     - name: 缓存虚拟环境
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: venv
         key: ${{ runner.os }}-venv-${{ hashFiles('requirements.txt') }}
@@ -56,7 +56,7 @@ jobs:
     
     - name: 上传测试报告
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-report
         path: |
