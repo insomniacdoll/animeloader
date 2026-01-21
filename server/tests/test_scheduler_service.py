@@ -53,8 +53,8 @@ def test_scheduler_service():
         
         rss_source = rss_service.create_rss_source(
             anime_id=anime.id,
-            name="测试RSS源",
-            url="https://example.com/rss",
+            name="蜜柑计划 RSS",
+            url="https://mikanani.me/RSS/Bangumi?bangumiId=3824",
             quality="1080p",
             auto_download=True
         )
@@ -83,6 +83,8 @@ def test_scheduler_service():
         
         # 测试5: 手动检查RSS源
         result = scheduler_service.check_rss_source(rss_source.id, auto_download=False)
+        if not result["success"]:
+            print(f"✗ 手动检查RSS源失败: {result.get('message', '未知错误')}")
         assert result["success"] is True
         print(f"✓ 手动检查RSS源: {result['message']}")
         
@@ -106,7 +108,23 @@ def test_scheduler_service():
         assert job_status is None
         print(f"✓ 验证任务已移除")
         
-        # 测试9: 添加另一个任务并测试自动下载
+        # 测试8: 测试获取支持的RSS源网站
+        supported_sites = scheduler_service.get_supported_rss_sites()
+        assert len(supported_sites) >= 1
+        print(f"✓ 获取支持的RSS源网站: {', '.join(supported_sites)}")
+
+        # 测试9: 测试解析器选择
+        mikan_parser = scheduler_service._get_rss_parser("https://mikanani.me/RSS/Bangumi?bangumiId=3824")
+        assert mikan_parser is not None
+        assert mikan_parser.get_site_name() == "蜜柑计划"
+        print(f"✓ 解析器选择: {mikan_parser.get_site_name()}")
+
+        # 测试10: 测试不支持的RSS源
+        unsupported_parser = scheduler_service._get_rss_parser("https://example.com/rss")
+        assert unsupported_parser is None
+        print(f"✓ 不支持的RSS源: 返回None")
+
+        # 测试11: 添加另一个任务并测试自动下载
         job_id2 = scheduler_service.add_check_job(
             rss_source_id=rss_source.id,
             interval=10,
@@ -115,20 +133,20 @@ def test_scheduler_service():
         assert job_id2 is not None
         print(f"✓ 添加自动下载任务: {job_id2}")
         
-        # 测试10: 手动检查RSS源（带自动下载）
+        # 测试12: 手动检查RSS源（带自动下载）
         result = scheduler_service.check_rss_source(rss_source.id, auto_download=True)
         assert result["success"] is True
         print(f"✓ 手动检查RSS源（自动下载）: {result['message']}")
-        
+
         # 等待一小段时间让调度器运行
         time.sleep(2)
-        
-        # 测试11: 停止调度器
+
+        # 测试13: 停止调度器
         success = scheduler_service.stop_scheduler()
         assert success is True
         assert scheduler_service.is_running is False
         print(f"✓ 停止调度器")
-        
+
         # 验证任务已清除
         jobs = scheduler_service.get_jobs()
         assert len(jobs) == 0
