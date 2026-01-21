@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import argparse
 import shlex
+from typing import Optional, List, Union
 from rich.console import Console
 from rich.table import Table
 
@@ -332,7 +333,7 @@ class AnimeCommands:
         except Exception as e:
             self._print_error(f"参数错误: {e}")
     
-    def _prompt_select_anime(self, max_index: int) -> int | None:
+    def _prompt_select_anime(self, max_index: int) -> Optional[int]:
         """提示用户选择动画"""
         while True:
             try:
@@ -353,7 +354,7 @@ class AnimeCommands:
                 self._print_info("\n已取消操作")
                 return None
     
-    def _prompt_select_rss(self, max_index: int) -> list[int] | None:
+    def _prompt_select_rss(self, max_index: int) -> Optional[List[int]]:
         """提示用户选择RSS源（支持多选）"""
         while True:
             try:
