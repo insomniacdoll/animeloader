@@ -2,7 +2,7 @@
 下载服务模块
 提供下载任务管理相关的业务逻辑
 """
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
