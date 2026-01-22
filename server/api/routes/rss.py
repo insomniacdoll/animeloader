@@ -77,13 +77,13 @@ def get_rss_source(
     response_model=RSSSourceResponse,
     status_code=status.HTTP_201_CREATED,
     summary="创建RSS源",
-    description="创建新的RSS源记录"
+    description="创建新的RSS源记录，如果同一动画下已存在相同URL的RSS源则返回已存在的记录"
 )
 def create_rss_source(
     rss_data: RSSSourceCreate,
     rss_service: RSSService = Depends(get_rss_service)
 ):
-    """创建RSS源"""
+    """创建RSS源，自动防止重复添加"""
     rss_source = rss_service.create_rss_source(
         anime_id=rss_data.anime_id,
         name=rss_data.name,

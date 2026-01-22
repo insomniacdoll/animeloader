@@ -87,6 +87,19 @@ def main():
         "命令模块导入测试"
     ))
     
+    # 新增的重复预防测试
+    # 测试10: 服务层重复添加预防测试
+    results.append(run_command(
+        f"{venv_python} tests/test_duplicate_prevention.py",
+        "服务层重复添加预防测试"
+    ))
+    
+    # 测试11: API层重复添加预防测试
+    results.append(run_command(
+        f"{venv_python} tests/test_api_duplicate.py",
+        "API层重复添加预防测试"
+    ))
+    
     # 汇总结果
     print(f"\n{'=' * 60}")
     print("测试结果汇总")
@@ -101,7 +114,9 @@ def main():
         "服务端API测试",
         "智能添加测试",
         "客户端API认证测试",
-        "命令模块导入测试"
+        "命令模块导入测试",
+        "服务层重复添加预防测试",
+        "API层重复添加预防测试"
     ]
     
     for i, (name, result) in enumerate(zip(test_names, results), 1):

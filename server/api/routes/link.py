@@ -91,13 +91,13 @@ def get_link(
     response_model=LinkResponse,
     status_code=status.HTTP_201_CREATED,
     summary="创建链接",
-    description="创建新的链接记录"
+    description="创建新的链接记录，如果同一RSS源下已存在相同URL的链接则返回已存在的记录"
 )
 def create_link(
     link_data: LinkCreate,
     link_service: LinkService = Depends(get_link_service)
 ):
-    """创建链接"""
+    """创建链接，自动防止重复添加"""
     link = link_service.add_link(
         rss_source_id=link_data.rss_source_id,
         episode_number=link_data.episode_number,

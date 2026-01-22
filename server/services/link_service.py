@@ -15,6 +15,13 @@ class LinkService:
     def __init__(self, db: Session):
         self.db = db
     
+    def get_link_by_url_and_rss_source(self, rss_source_id: int, url: str) -> Optional[Link]:
+        """根据RSS源ID和URL获取链接，用于检测重复"""
+        return self.db.query(Link).filter(
+            Link.rss_source_id == rss_source_id,
+            Link.url == url
+        ).first()
+
     def add_link(
         self,
         rss_source_id: int,
@@ -27,6 +34,12 @@ class LinkService:
         meta_data: Optional[str] = None
     ) -> Link:
         """添加链接"""
+        # 检查是否已存在相同URL的链接
+        if url:  # 只有当URL不为空时才检查重复
+            existing_link = self.get_link_by_url_and_rss_source(rss_source_id, url)
+            if existing_link:
+                return existing_link  # 返回已存在的链接
+        
         link = Link(
             rss_source_id=rss_source_id,
             episode_number=episode_number,
@@ -39,10 +52,21 @@ class LinkService:
             is_available=True,
             meta_data=meta_data
         )
-        self.db.add(link)
-        self.db.commit()
-        self.db.refresh(link)
-        return link
+        try:
+            self.db.add(link)
+            self.db.commit()
+            self.db.refresh(link)
+            return link
+        except IntegrityError:
+            # 如果数据库约束冲突，回滚并返回已存在的记录
+            self.db.rollback()
+            # 重新检查是否存在（以防在事务间被其他请求添加）
+            existing_link = self.get_link_by_url_and_rss_source(rss_source_id, url)
+            if existing_link:
+                return existing_link
+            else:
+                # 如果仍然不存在，可能是其他类型的约束冲突，重新抛出异常
+                raise
     
     def get_link(self, link_id: int) -> Optional[Link]:
         """获取单个链接"""

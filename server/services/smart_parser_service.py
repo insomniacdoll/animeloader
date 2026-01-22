@@ -117,6 +117,7 @@ class SmartParserService:
             title_en=anime_info.get('title_en'),
             description=anime_info.get('description'),
             cover_url=anime_info.get('cover_url'),
+            source_url=url,  # 添加来源URL防止重复
             status=anime_info.get('status', 'ongoing'),
             total_episodes=anime_info.get('total_episodes')
         )

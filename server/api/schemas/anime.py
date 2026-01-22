@@ -12,6 +12,7 @@ class AnimeBase(BaseModel):
     title_en: str | None = Field(None, description="英文标题", max_length=255)
     description: str | None = Field(None, description="描述")
     cover_url: str | None = Field(None, description="封面URL", max_length=500)
+    source_url: str | None = Field(None, description="来源URL", max_length=500)
     status: str = Field(default='ongoing', description="状态 (ongoing, completed, etc.)")
     total_episodes: int | None = Field(None, description="总集数", ge=0)
 
@@ -27,6 +28,7 @@ class AnimeUpdate(BaseModel):
     title_en: str | None = Field(None, description="英文标题", max_length=255)
     description: str | None = Field(None, description="描述")
     cover_url: str | None = Field(None, description="封面URL", max_length=500)
+    source_url: str | None = Field(None, description="来源URL", max_length=500)
     status: str | None = Field(None, description="状态 (ongoing, completed, etc.)")
     total_episodes: int | None = Field(None, description="总集数", ge=0)
 

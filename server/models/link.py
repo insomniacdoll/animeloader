@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Index
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Index, UniqueConstraint
 from sqlalchemy.orm import relationship
 from server.models.anime import Base
 
@@ -30,6 +30,7 @@ class Link(Base):
         Index('idx_link_is_downloaded', 'is_downloaded'),
         Index('idx_link_is_available', 'is_available'),
         Index('idx_link_publish_date', 'publish_date'),
+        UniqueConstraint('rss_source_id', 'url', name='uq_link_rss_source_url'),  # 添加唯一性约束
     )
 
     def __repr__(self):

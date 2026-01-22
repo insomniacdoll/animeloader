@@ -5,6 +5,7 @@
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
+from sqlalchemy.exc import IntegrityError
 
 from server.models.anime import Anime
 
@@ -15,28 +16,51 @@ class AnimeService:
     def __init__(self, db: Session):
         self.db = db
     
+    def get_anime_by_source_url(self, source_url: str) -> Optional[Anime]:
+        """根据来源URL获取动画"""
+        return self.db.query(Anime).filter(Anime.source_url == source_url).first()
+    
     def create_anime(
         self,
         title: str,
         title_en: Optional[str] = None,
         description: Optional[str] = None,
         cover_url: Optional[str] = None,
+        source_url: Optional[str] = None,
         status: str = 'ongoing',
         total_episodes: Optional[int] = None
     ) -> Anime:
         """创建动画记录"""
+        # 检查是否已存在相同source_url的动画
+        if source_url:
+            existing_anime = self.get_anime_by_source_url(source_url)
+            if existing_anime:
+                return existing_anime  # 返回已存在的动画
+        
         anime = Anime(
             title=title,
             title_en=title_en,
             description=description,
             cover_url=cover_url,
+            source_url=source_url,
             status=status,
             total_episodes=total_episodes
         )
-        self.db.add(anime)
-        self.db.commit()
-        self.db.refresh(anime)
-        return anime
+        try:
+            self.db.add(anime)
+            self.db.commit()
+            self.db.refresh(anime)
+            return anime
+        except IntegrityError:
+            # 如果数据库约束冲突，回滚并返回已存在的记录
+            self.db.rollback()
+            # 重新检查是否存在（以防在事务间被其他请求添加）
+            existing_anime = self.get_anime_by_source_url(source_url)
+            if existing_anime:
+                return existing_anime
+            else:
+                # 如果仍然不存在，可能是其他类型的约束冲突，重新抛出异常
+                raise
     
     def get_anime(self, anime_id: int) -> Optional[Anime]:
         """获取单个动画"""
@@ -80,6 +104,7 @@ class AnimeService:
         title_en: Optional[str] = None,
         description: Optional[str] = None,
         cover_url: Optional[str] = None,
+        source_url: Optional[str] = None,
         status: Optional[str] = None,
         total_episodes: Optional[int] = None
     ) -> Optional[Anime]:
@@ -97,6 +122,8 @@ class AnimeService:
             update_data['description'] = description
         if cover_url is not None:
             update_data['cover_url'] = cover_url
+        if source_url is not None:
+            update_data['source_url'] = source_url
         if status is not None:
             update_data['status'] = status
         if total_episodes is not None:

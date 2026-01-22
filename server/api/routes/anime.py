@@ -108,6 +108,7 @@ def create_anime(
         title_en=anime_data.title_en,
         description=anime_data.description,
         cover_url=anime_data.cover_url,
+        source_url=anime_data.source_url,  # 添加source_url参数
         status=anime_data.status,
         total_episodes=anime_data.total_episodes
     )

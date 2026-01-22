@@ -4,6 +4,7 @@ RSS源服务模块
 """
 from typing import List, Optional
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from server.models.rss_source import RSSSource
 
@@ -13,6 +14,13 @@ class RSSService:
     
     def __init__(self, db: Session):
         self.db = db
+    
+    def get_rss_source_by_url_and_anime(self, anime_id: int, url: str) -> Optional[RSSSource]:
+        """根据动画ID和URL获取RSS源，用于检测重复"""
+        return self.db.query(RSSSource).filter(
+            RSSSource.anime_id == anime_id,
+            RSSSource.url == url
+        ).first()
     
     def create_rss_source(
         self,
@@ -24,6 +32,11 @@ class RSSService:
         auto_download: bool = False
     ) -> RSSSource:
         """创建RSS源记录"""
+        # 检查是否已存在相同URL的RSS源
+        existing_rss = self.get_rss_source_by_url_and_anime(anime_id, url)
+        if existing_rss:
+            return existing_rss  # 返回已存在的RSS源
+        
         rss_source = RSSSource(
             anime_id=anime_id,
             name=name,
@@ -32,10 +45,21 @@ class RSSService:
             is_active=is_active,
             auto_download=auto_download
         )
-        self.db.add(rss_source)
-        self.db.commit()
-        self.db.refresh(rss_source)
-        return rss_source
+        try:
+            self.db.add(rss_source)
+            self.db.commit()
+            self.db.refresh(rss_source)
+            return rss_source
+        except IntegrityError:
+            # 如果数据库约束冲突，回滚并返回已存在的记录
+            self.db.rollback()
+            # 重新检查是否存在（以防在事务间被其他请求添加）
+            existing_rss = self.get_rss_source_by_url_and_anime(anime_id, url)
+            if existing_rss:
+                return existing_rss
+            else:
+                # 如果仍然不存在，可能是其他类型的约束冲突，重新抛出异常
+                raise
     
     def get_rss_source(self, rss_source_id: int) -> Optional[RSSSource]:
         """获取单个RSS源"""

@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Index
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Index, UniqueConstraint
 from sqlalchemy.orm import relationship
 from server.models.anime import Base
 
@@ -24,6 +24,7 @@ class RSSSource(Base):
     __table_args__ = (
         Index('idx_rss_source_anime_id', 'anime_id'),
         Index('idx_rss_source_is_active', 'is_active'),
+        UniqueConstraint('anime_id', 'url', name='uq_rss_source_anime_url'),  # 添加唯一性约束
     )
 
     def __repr__(self):
