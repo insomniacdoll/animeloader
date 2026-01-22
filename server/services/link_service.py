@@ -5,6 +5,7 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
+from sqlalchemy.exc import IntegrityError
 
 from server.models.link import Link
 
@@ -34,6 +35,12 @@ class LinkService:
         meta_data: Optional[str] = None
     ) -> Link:
         """添加链接"""
+        # 确保link_type只能是magnet或ed2k
+        if link_type not in ["magnet", "ed2k"]:
+            # 如果是其他类型（如torrent），则跳过该链接，不添加到数据库
+            # 这样可以确保数据库中只包含允许的链接类型
+            raise ValueError(f"不支持的链接类型: {link_type}，只允许 magnet 和 ed2k")
+        
         # 检查是否已存在相同URL的链接
         if url:  # 只有当URL不为空时才检查重复
             existing_link = self.get_link_by_url_and_rss_source(rss_source_id, url)

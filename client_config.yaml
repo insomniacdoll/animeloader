@@ -9,7 +9,7 @@ server:
   # API密钥（必填，用于身份验证）
   # 请从服务端启动日志中获取默认API密钥
   # 示例: "550e8400-e29b-41d4-a716-446655440000"
-  api_key: "35dddd59-65eb-42bc-963d-819ddbd54179"
+  api_key: "ffbf8880-093d-46ed-87b0-5a58a549c54f"
 
 display:
   theme: "auto"                  # 主题: auto, light, dark

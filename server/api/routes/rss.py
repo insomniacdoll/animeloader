@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from server.database import get_db
 from server.services.rss_service import RSSService
+from server.services.scheduler_service import SchedulerService
 from server.api.schemas import (
     RSSSourceCreate,
     RSSSourceUpdate,
@@ -24,16 +25,39 @@ router = APIRouter(
 )
 
 
-def get_rss_service(db: Session = Depends(get_db)) -> RSSService:
+# 全局调度服务实例（需要在应用启动时设置）
+_scheduler_service: SchedulerService | None = None
+
+
+def set_scheduler_service(service: SchedulerService):
+    """设置全局调度服务实例"""
+    global _scheduler_service
+    _scheduler_service = service
+
+
+def get_scheduler_service() -> SchedulerService:
+    """获取调度服务实例"""
+    if _scheduler_service is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="调度服务未启动"
+        )
+    return _scheduler_service
+
+
+def get_rss_service(
+    db: Session = Depends(get_db),
+    scheduler_service: SchedulerService = Depends(get_scheduler_service)
+) -> RSSService:
     """获取RSS源服务实例"""
-    return RSSService(db)
+    return RSSService(db, scheduler_service)
 
 
 @router.get(
     "",
     response_model=RSSSourceListResponse,
     summary="获取所有RSS源",
-    description="获取所有RSS源列表"
+    description="获取所有RSS源列表，支持按动画ID过滤"
 )
 def get_rss_sources(
     anime_id: int | None = None,
@@ -43,8 +67,8 @@ def get_rss_sources(
     if anime_id is not None:
         rss_sources = rss_service.get_rss_sources(anime_id)
     else:
-        # 获取所有RSS源（需要实现）
-        rss_sources = []
+        # 获取所有RSS源
+        rss_sources = rss_service.get_all_rss_sources()
     
     return RSSSourceListResponse(
         total=len(rss_sources),

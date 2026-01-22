@@ -31,6 +31,7 @@ def get_link_service(db: Session = Depends(get_db)) -> LinkService:
 
 
 # 全局调度服务实例（需要在应用启动时设置）
+# 使用独立的变量，避免循环导入问题
 _scheduler_service: SchedulerService | None = None
 
 

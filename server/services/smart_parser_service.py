@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from typing import List, Dict, Optional
 from sqlalchemy.orm import Session
 

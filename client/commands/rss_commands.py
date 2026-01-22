@@ -75,36 +75,43 @@ class RSSCommands:
             if parsed.anime_id:
                 response = self.api_client.get(f'/api/anime/{parsed.anime_id}/rss-sources')
             else:
-                # 获取所有RSS源（需要遍历所有动画）
-                anime_response = self.api_client.get('/api/anime', params={'page': 1, 'size': 1000})
-                if 'error' in anime_response:
-                    self._print_error(f"获取动画列表失败: {anime_response['error']}")
-                    return
-                
-                animes = anime_response.get('items', [])
-                all_rss_sources = []
-                
-                for anime in animes:
-                    rss_response = self.api_client.get(f'/api/anime/{anime["id"]}/rss-sources')
-                    if 'error' not in rss_response:
-                        for rss in rss_response:
-                            rss['anime_title'] = anime['title']
-                            all_rss_sources.append(rss)
-                
-                response = all_rss_sources
+                # 获取所有RSS源
+                response = self.api_client.get('/api/rss-sources')
+            
+            # 处理响应
+            if 'error' in response:
+                self._print_error(f"获取RSS源列表失败: {response['error']}")
+                return
+            
+            # 提取RSS源列表
+            if isinstance(response, dict) and 'items' in response:
+                rss_sources = response['items']
+                total = response.get('total', len(rss_sources))
+            else:
+                rss_sources = response if isinstance(response, list) else []
+                total = len(rss_sources)
             
             if 'error' in response:
                 self._print_error(f"获取RSS源列表失败: {response['error']}")
                 return
             
-            rss_sources = response if isinstance(response, list) else []
-            
             if not rss_sources:
                 self._print_info("没有找到RSS源")
                 return
             
+            # 如果是获取所有RSS源，需要获取动画信息以显示动画标题
+            if not parsed.anime_id:
+                # 获取动画列表以获取动画标题
+                anime_response = self.api_client.get('/api/anime', params={'page': 1, 'size': 1000})
+                if 'error' not in anime_response:
+                    anime_map = {anime['id']: anime['title'] for anime in anime_response.get('items', [])}
+                    
+                    # 为每个RSS源添加动画标题
+                    for rss in rss_sources:
+                        rss['anime_title'] = anime_map.get(rss.get('anime_id'), 'N/A')
+            
             # 显示RSS源列表
-            table = Table(title=f"RSS源列表 (共 {len(rss_sources)} 条)")
+            table = Table(title=f"RSS源列表 (共 {total} 条)")
             table.add_column("ID", style="cyan", width=6)
             table.add_column("名称", style="magenta")
             table.add_column("动画", style="green")
@@ -117,7 +124,7 @@ class RSSCommands:
                 table.add_row(
                     str(rss['id']),
                     rss['name'],
-                    rss.get('anime_title', 'N/A'),
+                    rss.get('anime_title', str(rss.get('anime_id', 'N/A'))),
                     rss['url'][:50] + '...' if len(rss['url']) > 50 else rss['url'],
                     rss.get('quality', 'N/A'),
                     "激活" if rss.get('is_active') else "停用",

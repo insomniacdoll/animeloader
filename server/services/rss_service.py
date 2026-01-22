@@ -12,8 +12,9 @@ from server.models.rss_source import RSSSource
 class RSSService:
     """RSS源服务类"""
     
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, scheduler_service=None):
         self.db = db
+        self.scheduler_service = scheduler_service
     
     def get_rss_source_by_url_and_anime(self, anime_id: int, url: str) -> Optional[RSSSource]:
         """根据动画ID和URL获取RSS源，用于检测重复"""
@@ -49,6 +50,17 @@ class RSSService:
             self.db.add(rss_source)
             self.db.commit()
             self.db.refresh(rss_source)
+            
+            # 如果启用了自动下载，创建调度任务
+            if auto_download and self.scheduler_service:
+                from server.utils.config import config
+                check_interval = config.get('rss.check_interval', 3600)  # 从配置获取检查间隔，默认1小时
+                self.scheduler_service.add_check_job(
+                    rss_source_id=rss_source.id,
+                    interval=check_interval,
+                    auto_download=True
+                )
+            
             return rss_source
         except IntegrityError:
             # 如果数据库约束冲突，回滚并返回已存在的记录
@@ -69,6 +81,10 @@ class RSSService:
         """获取动画的所有RSS源"""
         return self.db.query(RSSSource).filter(RSSSource.anime_id == anime_id).all()
     
+    def get_all_rss_sources(self) -> List[RSSSource]:
+        """获取所有RSS源"""
+        return self.db.query(RSSSource).all()
+    
     def update_rss_source(
         self,
         rss_source_id: int,
@@ -82,6 +98,9 @@ class RSSService:
         rss_source = self.get_rss_source(rss_source_id)
         if not rss_source:
             return None
+        
+        # 保存原始的auto_download状态，用于后续判断是否需要管理调度任务
+        original_auto_download = rss_source.auto_download
         
         update_data = {}
         if name is not None:
@@ -100,6 +119,23 @@ class RSSService:
         
         self.db.commit()
         self.db.refresh(rss_source)
+        
+        # 如果auto_download状态发生变化，管理调度任务
+        if auto_download is not None and auto_download != original_auto_download and self.scheduler_service:
+            job_id = f"rss_check_{rss_source_id}"
+            if auto_download:
+                # 启用自动下载，创建调度任务
+                from server.utils.config import config
+                check_interval = config.get('rss.check_interval', 3600)  # 从配置获取检查间隔，默认1小时
+                self.scheduler_service.add_check_job(
+                    rss_source_id=rss_source_id,
+                    interval=check_interval,
+                    auto_download=True
+                )
+            else:
+                # 禁用自动下载，移除调度任务
+                self.scheduler_service.remove_check_job(job_id)
+        
         return rss_source
     
     def delete_rss_source(self, rss_source_id: int) -> bool:

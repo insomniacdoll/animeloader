@@ -140,29 +140,7 @@ class MikanRSSParser(BaseRSSParser):
         """
         links = []
         
-        # 检查enclosures（蜜柑计划的种子文件在这里）
-        if hasattr(entry, 'enclosures'):
-            for enclosure in entry.enclosures:
-                url = enclosure.get('href', '')
-                enclosure_type = enclosure.get('type', '')
-                length = enclosure.get('length', 0)
-                
-                # 处理种子文件
-                if enclosure_type == 'application/x-bittorrent' or url.endswith('.torrent'):
-                    try:
-                        file_size = int(length) if length else 0
-                        filename = self._extract_filename_from_url(url) or entry.get('title', '')
-                        links.append({
-                            'link_type': 'torrent',
-                            'url': url,
-                            'file_size': file_size,
-                            'filename': filename,
-                            'meta_data': f'torrent_file:{url}'
-                        })
-                    except (ValueError, TypeError):
-                        pass
-        
-        # 检查links字段
+        # 检查links字段 - 处理磁力链接
         if hasattr(entry, 'links'):
             for link in entry.links:
                 url = link.get('href', '')
@@ -178,6 +156,29 @@ class MikanRSSParser(BaseRSSParser):
                             'filename': entry.get('title', ''),
                             'meta_data': f'magnet_link:{url}'
                         })
+        
+        # 检查enclosures（蜜柑计划的种子文件在这里）
+        # 如果找到种子文件，直接存储为torrent类型，由上层服务决定如何处理
+        if hasattr(entry, 'enclosures'):
+            for enclosure in entry.enclosures:
+                url = enclosure.get('href', '')
+                enclosure_type = enclosure.get('type', '')
+                length = enclosure.get('length', 0)
+                
+                # 处理种子文件，保持为torrent类型
+                if enclosure_type == 'application/x-bittorrent' or url.endswith('.torrent'):
+                    try:
+                        file_size = int(length) if length else 0
+                        filename = self._extract_filename_from_url(url) or entry.get('title', '')
+                        links.append({
+                            'link_type': 'torrent',  # 保持为torrent类型
+                            'url': url,
+                            'file_size': file_size,
+                            'filename': filename,
+                            'meta_data': f'torrent_file:{url}'
+                        })
+                    except (ValueError, TypeError):
+                        pass
         
         return links
     

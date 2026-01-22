@@ -9,7 +9,7 @@ database:
   path: "~/.animeloader/data/animeloader.db" 
 
 rss:
-  check_interval: 3600      # RSS检查间隔（秒）
+  check_interval: 120      # RSS检查间隔（秒）
   timeout: 30               # RSS请求超时（秒）
   max_links_per_source: 100 # 每个RSS源保留的最大链接数
   link_retention_days: 30   # 链接保留天数

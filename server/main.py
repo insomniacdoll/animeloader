@@ -110,11 +110,13 @@ class AnimeLoaderServer:
             scheduler_enabled = self.config.get('scheduler.enabled', True) if self.config else True
             if scheduler_enabled:
                 from server.database import get_db
-                self.scheduler_service = SchedulerService(get_db)
+                self.scheduler_service = SchedulerService(get_db, self.config)
                 self.scheduler_service.start_scheduler()
                 
                 # 设置调度服务实例到路由模块
-                set_scheduler_service(self.scheduler_service)
+                from server.api.routes.rss import set_scheduler_service as set_rss_scheduler_service
+                from server.api.routes.rss_extra import set_scheduler_service as set_rss_extra_scheduler_service
+                set_rss_scheduler_service(self.scheduler_service)
                 set_rss_extra_scheduler_service(self.scheduler_service)
                 
                 self.logger.info("Scheduler initialized and started")
