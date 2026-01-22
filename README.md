@@ -30,6 +30,7 @@ AnimeLoader 是一个基于 Python 的动画订阅和下载管理系统，采用
 - 🔐 **API 密钥认证**：基于 API 密钥的身份认证机制，保护服务端接口安全
 - 🧪 **完善测试**：包含完整的单元测试和集成测试
 - 📱 **命令行客户端**：基于 cmd2 和 rich 的交互式命令行界面
+- 🧩 **完整的客户端命令支持**：anime、rss、link、downloader、download、status 命令已全部实现
 
 ---
 
@@ -48,12 +49,17 @@ AnimeLoader 是一个基于 Python 的动画订阅和下载管理系统，采用
 - [x] 调度服务（定时任务管理）
 - [x] 基础 API 框架（FastAPI）
 - [x] 模块化路由和 Schemas 设计
-- [x] 完整的测试套件（11 个测试模块）
+- [x] 完整的测试套件（14 个测试模块）
 - [x] 客户端基础框架
 - [x] API 密钥认证（路由器级别依赖，类似 Java Spring AOP）
 - [x] API 密钥管理服务（创建、验证、更新、删除）
 - [x] 服务端所有 API 路由实现（anime、rss、link、downloader、download、scheduler、smart_parser、health）
 - [x] 客户端 anime 命令（add、list、show、smart-add）
+- [x] 客户端 rss 命令（add、list、show、update、remove、check）
+- [x] 客户端 link 命令（list、show、mark-downloaded）
+- [x] 客户端 downloader 命令（add、list、show、update、remove、test、set-default、types）
+- [x] 客户端 download 命令（start、list、pause、resume、cancel、status、sync、active）
+- [x] 客户端 status 命令（server、system、scheduler、summary）
 - [x] 重复添加预防功能（动画、RSS源、链接）
 
 ### 开发中 🚧
@@ -61,7 +67,6 @@ AnimeLoader 是一个基于 Python 的动画订阅和下载管理系统，采用
 - [ ] RSS 源自动检查
 - [ ] 链接自动下载
 - [ ] 下载状态同步
-- [ ] 客户端命令实现（rss、link、downloader、download、status）
 
 ### 计划中 📋
 
@@ -324,10 +329,17 @@ python client/tests/test_smart_add.py
 - ✅ 下载服务测试
 - ✅ 调度服务测试
 - ✅ 服务端 API 测试
-- ✅ 客户端智能添加测试
-- ✅ 客户端 API 认证测试
+- ✅ API认证测试
+- ✅ RSS解析器测试
+- ✅ 集成测试
 - ✅ 服务层重复添加预防测试
 - ✅ API层重复添加预防测试
+- ✅ 命令模块导入测试
+- ✅ RSS命令测试
+- ✅ 下载器命令测试
+- ✅ 下载命令测试
+- ✅ 链接命令测试
+- ✅ 状态命令测试
 
 ### 测试结果
 
@@ -344,10 +356,17 @@ python client/tests/test_smart_add.py
 5. 下载服务测试: ✓ 通过
 6. 调度服务测试: ✓ 通过
 7. 服务端API测试: ✓ 通过
-8. 客户端测试: ✓ 通过
-9. 客户端API认证测试: ✓ 通过
-10. 服务层重复添加预防测试: ✓ 通过
-11. API层重复添加预防测试: ✓ 通过
+8. API认证测试: ✓ 通过
+9. RSS解析器测试: ✓ 通过
+10. 集成测试: ✓ 通过
+11. 服务层重复添加预防测试: ✓ 通过
+12. API层重复添加预防测试: ✓ 通过
+13. 命令模块导入测试: ✓ 通过
+14. RSS命令测试: ✓ 通过
+15. 下载器命令测试: ✓ 通过
+16. 下载命令测试: ✓ 通过
+17. 链接命令测试: ✓ 通过
+18. 状态命令测试: ✓ 通过
 
 ============================================================
 [成功] 所有测试通过
@@ -444,7 +463,7 @@ logging:
 - 🚧 RSS 源自动检查
 - 🚧 链接自动下载
 - 🚧 下载状态同步
-- 🚧 客户端命令实现（rss、link、downloader、download、status 命令）
+- ✅ 客户端命令实现（rss、link、downloader、download、status 命令）
 
 ### v0.3.0+（未来计划）
 

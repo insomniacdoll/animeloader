@@ -19,7 +19,13 @@ animeloader/
 │   ├── test_rss_parser.py    # RSS解析器测试 ✅
 │   ├── test_integration.py   # 集成测试 ✅
 │   ├── test_duplicate_prevention.py  # 重复添加预防测试 ✅
-│   └── test_api_duplicate.py       # API层重复添加预防测试 ✅
+│   ├── test_api_duplicate.py       # API层重复添加预防测试 ✅
+│   ├── test_commands_import.py     # 命令模块导入测试 ✅
+│   ├── test_rss_commands.py        # RSS命令测试 ✅
+│   ├── test_link_commands.py       # 链接命令测试 ✅
+│   ├── test_downloader_commands.py # 下载器命令测试 ✅
+│   ├── test_download_commands.py   # 下载命令测试 ✅
+│   └── test_status_commands.py     # 状态命令测试 ✅
 └── run_tests.py              # 运行所有测试的脚本 ✅
 ```
 
@@ -264,6 +270,12 @@ python tests/test_integration.py
 11. 集成测试: ✓ 通过
 12. 服务层重复添加预防测试: ✓ 通过
 13. API层重复添加预防测试: ✓ 通过
+14. 命令模块导入测试: ✓ 通过
+15. RSS命令测试: ✓ 通过
+16. 链接命令测试: ✓ 通过
+17. 下载器命令测试: ✓ 通过
+18. 下载命令测试: ✓ 通过
+19. 状态命令测试: ✓ 通过
 
 ============================================================
 [成功] 所有测试通过
@@ -287,10 +299,15 @@ python tests/test_integration.py
 - ✅ **重复添加预防**：动画、RSS源、链接的重复添加预防机制
 - ✅ **服务层测试**：重复添加预防功能的单元测试
 - ✅ **API层测试**：重复添加预防功能的集成测试
+- ✅ **命令模块导入测试**：验证所有命令模块能够正确导入
+- ✅ **RSS命令测试**：RSS源相关命令的测试
+- ✅ **链接命令测试**：链接相关命令的测试
+- ✅ **下载器命令测试**：下载器相关命令的测试
+- ✅ **下载命令测试**：下载相关命令的测试
+- ✅ **状态命令测试**：状态相关命令的测试
 
 待测试的功能模块：
 
-- 📋 **其他客户端命令**（rss、link、downloader、download、status）
 - 📋 **RSS源自动检查**
 - 📋 **链接自动下载**
 - 📋 **下载状态同步**

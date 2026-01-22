@@ -952,45 +952,97 @@ animeloader> exit
 animeloader> quit
 ```
 
-**计划中的命令：**
+**已实现的命令：**
+
+
 
 ```bash
-# RSS源相关命令（计划中）
+
+# RSS源相关命令
+
 animeloader> rss add --anime-id 1 --name "DMHY 1080P" --url "https://example.com/rss" --quality 1080p
+
 animeloader> rss smart-add --url "https://mikanani.me/RSS/Bangumi/12345" --anime-id 1
+
 animeloader> rss list --anime-id 1
+
 animeloader> rss show --id 1
+
 animeloader> rss update --id 1 --quality 720p
+
 animeloader> rss remove --id 1
+
 animeloader> rss check --id 1
 
-# 链接相关命令（计划中）
+
+
+# 链接相关命令
+
 animeloader> link list --rss-source-id 1
-animeloader> link filter --rss-source-id 1 --link-type magnet
+
+animeloader> link list --type magnet --downloaded false
+
 animeloader> link show --id 1
 
-# 下载器相关命令（计划中）
+animeloader> link mark-downloaded --id 1
+
+
+
+# 下载器相关命令
+
 animeloader> downloader add --name "本地aria2" --type aria2 --config '{"host": "127.0.0.1", "port": 6800}'
+
 animeloader> downloader list
+
 animeloader> downloader show --id 1
+
 animeloader> downloader test --id 1
+
 animeloader> downloader set-default --id 1
+
 animeloader> downloader types
+
 animeloader> downloader remove --id 1
 
-# 下载相关命令（计划中）
-animeloader> download start --link-id 1
-animeloader> download list
-animeloader> download pause --task-id 1
-animeloader> download resume --task-id 1
-animeloader> download cancel --task-id 1
-animeloader> download status --task-id 1
-animeloader> download sync --task-id 1
 
-# 状态查询命令（计划中）
+
+# 下载相关命令
+
+animeloader> download start --link-id 1
+
+animeloader> download list
+
+animeloader> download pause --id 1
+
+animeloader> download resume --id 1
+
+animeloader> download cancel --id 1
+
+animeloader> download status --id 1
+
+animeloader> download sync --id 1
+
+animeloader> download active
+
+
+
+# 状态查询命令
+
 animeloader> status server
+
 animeloader> status system
+
+animeloader> status scheduler
+
+animeloader> status summary
+
 ```
+
+
+
+**计划中的命令：**
+
+（暂无新增计划中的命令）
 
 ## 6. 数据库设计
 
