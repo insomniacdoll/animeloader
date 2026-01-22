@@ -49,21 +49,22 @@ animeloader 是一个用于订阅动画发布和管理动画下载内容的 Pyth
 
 ### 1.1 核心功能
 
-- **动画订阅管理**：添加、删除、修改动画订阅信息
-- **RSS源管理**：添加、删除、检查RSS订阅源
+- **动画订阅管理**：添加、删除、修改动画订阅信息 ✅
+- **RSS源管理**：添加、删除、检查RSS订阅源 ✅
 - **智能解析功能**：
-  - 支持从动画网站链接自动解析动画信息和RSS订阅链接
-  - 当前支持 https://mikanani.me/（蜜柑计划）
-  - 动画智能解析支持连锁操作，解析动画后可自动解析RSS源
-  - RSS源智能解析需指定所属动画
-  - 解析结果有多个时提供交互式选择界面
-  - 支持多选和范围选择（如 1,2,3 或 1-3）
-- **链接管理**：查看、过滤下载链接，支持多种链接类型（magnet、ed2k等）
-- **下载器管理**：支持多种下载器（aria2、pikpak等），支持扩展新的下载器
-- **下载任务管理**：针对每个链接创建下载任务，支持暂停、恢复、取消
-- **定时下载任务**：自动检测新发布的动画并下载
-- **下载状态监控**：实时查看下载进度和状态，支持同步外部下载器状态
-- **命令行交互**：提供友好的 CLI 界面进行操作
+  - 支持从动画网站链接自动解析动画信息和RSS订阅链接 ✅
+  - 当前支持 https://mikanani.me/（蜜柑计划）✅
+  - 动画智能解析支持连锁操作，解析动画后可自动解析RSS源 ✅
+  - RSS源智能解析需指定所属动画 ✅
+  - 解析结果有多个时提供交互式选择界面 ✅
+  - 支持多选和范围选择（如 1,2,3 或 1-3）✅
+- **链接管理**：查看、过滤下载链接，支持多种链接类型（magnet、ed2k等）✅
+- **下载器管理**：支持多种下载器（aria2、pikpak等），支持扩展新的下载器 ✅
+- **下载任务管理**：针对每个链接创建下载任务，支持暂停、恢复、取消 ✅
+- **定时下载任务**：自动检测新发布的动画并下载 ✅
+- **下载状态监控**：实时查看下载进度和状态，支持同步外部下载器状态 ✅
+- **命令行交互**：提供友好的 CLI 界面进行操作 ✅
+- **重复添加预防**：防止同一地址的动画、同一动画下的重复RSS源、同一RSS源下的重复链接 ✅
 
 ### 1.2 目标用户
 
@@ -296,11 +297,15 @@ class Anime:
     title_en: str              # 英文标题
     description: str           # 描述
     cover_url: str             # 封面URL
+    source_url: str            # 来源URL（用于防止重复添加）
     status: str                # 状态 (ongoing, completed, etc.)
     total_episodes: int        # 总集数
     created_at: datetime       # 创建时间
     updated_at: datetime       # 更新时间
 ```
+
+**唯一性约束**：
+- `source_url`：基于来源URL防止重复添加相同的动画
 
 #### 4.1.2 RSSSource (RSS订阅源)
 
@@ -396,18 +401,20 @@ class APIKey:
 
 #### 4.2.1 AnimeService (动画管理服务) ✅
 
-- `create_anime(title, title_en, description, cover_url, status, total_episodes)` - 创建动画记录
+- `create_anime(title, title_en, description, cover_url, source_url, status, total_episodes)` - 创建动画记录（基于source_url防止重复添加）
 - `get_anime(anime_id)` - 获取单个动画
 - `get_animes(page, size, search, status)` - 获取动画列表，支持搜索和过滤
+- `get_anime_by_source_url(source_url)` - 根据来源URL获取动画（用于重复检查）
 - `update_anime(anime_id, **kwargs)` - 更新动画信息
 - `delete_anime(anime_id)` - 删除动画
 - `count_animes(search, status)` - 统计动画数量
 
 #### 4.2.2 RSSService (RSS源管理服务) ✅
 
-- `create_rss_source(anime_id, name, url, quality, is_active, auto_download)` - 创建RSS源记录
+- `create_rss_source(anime_id, name, url, quality, is_active, auto_download)` - 创建RSS源记录（基于URL防止同一动画下重复添加）
 - `get_rss_source(rss_source_id)` - 获取单个RSS源
 - `get_rss_sources(anime_id)` - 获取动画的所有RSS源
+- `get_rss_source_by_url_and_anime(url, anime_id)` - 根据URL和动画ID获取RSS源（用于重复检查）
 - `update_rss_source(rss_source_id, **kwargs)` - 更新RSS源信息
 - `delete_rss_source(rss_source_id)` - 删除RSS源
 
@@ -422,9 +429,10 @@ class APIKey:
 
 #### 4.2.4 LinkService (链接管理服务) ✅
 
-- `add_link(rss_source_id, episode_number, episode_title, link_type, url, **kwargs)` - 添加链接
+- `add_link(rss_source_id, episode_number, episode_title, link_type, url, **kwargs)` - 添加链接（基于URL防止同一RSS源下重复添加）
 - `get_links(page, size, is_downloaded=None, link_type=None, rss_source_id=None)` - 获取链接列表，支持过滤
 - `get_link(link_id)` - 获取单个链接
+- `get_link_by_url_and_rss_source(url, rss_source_id)` - 根据URL和RSS源ID获取链接（用于重复检查）
 - `mark_as_downloaded(link_id)` - 标记链接为已下载
 - `update_link_status(link_id, is_available)` - 更新链接可用状态
 - `get_available_links(rss_source_id)` - 获取可用的下载链接
@@ -643,7 +651,7 @@ def get_animes(...):
 # 动画相关 ✅
 GET    /api/anime                   # 获取动画列表，支持搜索和过滤
 GET    /api/anime/{anime_id}        # 获取动画详情
-POST   /api/anime                   # 创建动画
+POST   /api/anime                   # 创建动画（基于source_url防止重复添加）
 PUT    /api/anime/{anime_id}        # 更新动画
 DELETE /api/anime/{anime_id}        # 删除动画
 POST   /api/anime/smart-parse       # 智能解析动画信息
@@ -652,9 +660,16 @@ POST   /api/anime/smart-add         # 智能添加动画（支持连锁解析RSS
 # RSS源相关 ✅
 GET    /api/anime/{anime_id}/rss-sources  # 获取动画的所有RSS源
 GET    /api/rss-sources/{rss_source_id}   # 获取单个RSS源
-POST   /api/rss-sources            # 创建RSS源
+POST   /api/rss-sources            # 创建RSS源（基于URL防止同一动画下重复添加）
 PUT    /api/rss-sources/{rss_source_id}   # 更新RSS源
 DELETE /api/rss-sources/{rss_source_id}   # 删除RSS源
+
+# 链接相关 ✅
+GET    /api/rss-sources/{id}/links  # 获取RSS源的所有链接
+GET    /api/links/{id}              # 获取单个链接
+GET    /api/links                   # 获取链接列表（支持过滤）
+POST   /api/links                   # 创建链接（基于URL防止同一RSS源下重复添加）
+POST   /api/links/{id}/mark-downloaded  # 标记为已下载
 
 # 智能解析相关 ✅
 GET    /api/smart-parser/sites     # 获取支持的网站列表
@@ -664,6 +679,11 @@ POST   /api/smart-parser/parse-rss    # 解析RSS链接（待实现）
 # 健康检查 ✅
 GET    /api/health                  # 健康检查
 ```
+
+**重复添加预防机制**：
+- 动画：基于 `source_url` 防止重复添加
+- RSS源：同一动画下基于 `url` 防止重复添加
+- 链接：同一RSS源下基于 `url` 防止重复添加
 
 **计划中的 API：**
 
@@ -984,12 +1004,18 @@ animeloader> status system
 ### 6.2 索引设计
 
 ```python
+# Anime 表
+Index('idx_anime_source_url', Anime.source_url)  # 用于基于source_url的动画去重查询
+Index('idx_anime_title', Anime.title)             # 用于动画名搜索
+
 # RSSSource 表
 Index('idx_rss_source_anime_id', RSSSource.anime_id)
+Index('idx_rss_source_url', RSSSource.url)        # 用于基于URL的RSS源去重查询
 Index('idx_rss_source_is_active', RSSSource.is_active)
 
 # Link 表
 Index('idx_link_rss_source_id', Link.rss_source_id)
+Index('idx_link_url', Link.url)                   # 用于基于URL的链接去重查询
 Index('idx_link_type', Link.link_type)
 Index('idx_link_is_downloaded', Link.is_downloaded)
 Index('idx_link_is_available', Link.is_available)
@@ -1006,6 +1032,22 @@ Index('idx_download_link_id', DownloadTask.link_id)
 Index('idx_download_downloader_id', DownloadTask.downloader_id)
 Index('idx_download_downloader_type', DownloadTask.downloader_type)
 Index('idx_download_status', DownloadTask.status)
+```
+
+### 6.3 唯一性约束
+
+```python
+# Anime 表
+# 基于 source_url 防止动画重复添加
+UniqueConstraint(Anime.source_url)
+
+# RSSSource 表
+# 同一动画下基于 URL 防止RSS源重复添加
+UniqueConstraint(RSSSource.anime_id, RSSSource.url)
+
+# Link 表
+# 同一RSS源下基于 URL 防止链接重复添加
+UniqueConstraint(Link.rss_source_id, Link.url)
 ```
 
 ## 7. 配置管理

@@ -17,7 +17,9 @@ animeloader/
 │   ├── test_api.py           # 服务端API测试 ✅
 │   ├── test_auth.py          # API认证测试 ✅
 │   ├── test_rss_parser.py    # RSS解析器测试 ✅
-│   └── test_integration.py   # 集成测试 ✅
+│   ├── test_integration.py   # 集成测试 ✅
+│   ├── test_duplicate_prevention.py  # 重复添加预防测试 ✅
+│   └── test_api_duplicate.py       # API层重复添加预防测试 ✅
 └── run_tests.py              # 运行所有测试的脚本 ✅
 ```
 
@@ -217,6 +219,30 @@ python tests/test_integration.py
 - GET /api/scheduler/jobs（获取调度任务）
 - GET /api/smart-parser/sites（获取支持的网站）
 
+### 12. 服务层重复添加预防测试 (`test_duplicate_prevention.py`) ✅
+
+测试服务层的重复添加预防功能，包括：
+- 动画基于 `source_url` 的重复预防
+- RSS源基于 `url` 和 `anime_id` 的重复预防
+- 链接基于 `url` 和 `rss_source_id` 的重复预防
+- 不同实体下允许相同URL的测试
+
+**运行条件**：无需启动服务端，使用临时数据库
+
+**测试文件位置**：`tests/test_duplicate_prevention.py`
+
+### 13. API层重复添加预防测试 (`test_api_duplicate.py`) ✅
+
+测试API层的重复添加预防功能，包括：
+- 动画基于 `source_url` 的重复预防
+- RSS源基于 `url` 和 `anime_id` 的重复预防
+- 链接基于 `url` 和 `rss_source_id` 的重复预防
+- 使用服务端隔离环境进行测试
+
+**运行条件**：需要启动服务端
+
+**测试文件位置**：`tests/test_api_duplicate.py`
+
 ## 测试结果
 
 所有测试应通过，输出如下：
@@ -236,6 +262,8 @@ python tests/test_integration.py
 9. RSS解析器测试: ✓ 通过
 10. 工具函数测试: ✓ 通过
 11. 集成测试: ✓ 通过
+12. 服务层重复添加预防测试: ✓ 通过
+13. API层重复添加预防测试: ✓ 通过
 
 ============================================================
 [成功] 所有测试通过
@@ -247,15 +275,18 @@ python tests/test_integration.py
 当前测试覆盖的功能模块：
 
 - ✅ **智能解析服务**：蜜柑计划网站解析器
-- ✅ **动画管理服务**：创建、查询动画
-- ✅ **RSS源管理服务**：创建、查询RSS源
-- ✅ **链接管理服务**：添加、获取、更新、删除链接，按类型过滤
+- ✅ **动画管理服务**：创建、查询动画，基于source_url的重复预防
+- ✅ **RSS源管理服务**：创建、查询RSS源，基于url和anime_id的重复预防
+- ✅ **链接管理服务**：添加、获取、更新、删除链接，按类型过滤，基于url和rss_source_id的重复预防
 - ✅ **下载器管理服务**：添加、获取、更新、删除下载器，测试连接
 - ✅ **下载任务管理服务**：创建、开始、暂停、恢复、取消下载任务
 - ✅ **调度服务**：启动/停止调度器，添加/移除/暂停/恢复任务
 - ✅ **服务端API**：动画相关API、智能解析API、链接API、下载器API、下载API、调度API
 - ✅ **客户端命令**：anime命令（add、list、show、smart-add）、智能添加命令
 - ✅ **API认证**：路由器级别依赖认证，验证API密钥有效性
+- ✅ **重复添加预防**：动画、RSS源、链接的重复添加预防机制
+- ✅ **服务层测试**：重复添加预防功能的单元测试
+- ✅ **API层测试**：重复添加预防功能的集成测试
 
 待测试的功能模块：
 
