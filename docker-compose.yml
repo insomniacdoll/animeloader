@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  animeloader-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: animeloader-server
+    ports:
+      - "8000:8000"
+    volumes:
+      # 挂载数据目录
+      - animeloader_data:/home/app/.animeloader/data
+      # 挂载日志目录
+      - animeloader_logs:/home/app/.animeloader/logs
+      # 挂载下载目录
+      - animeloader_downloads:/home/app/.animeloader/downloads
+    environment:
+      # 通过环境变量配置服务端口，覆盖配置文件中的默认值
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  animeloader_data:
+  animeloader_logs:
+  animeloader_downloads:

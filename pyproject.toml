@@ -1,0 +1,83 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "animeloader"
+version = "0.1.0"
+description = "一个功能强大的动画订阅和下载管理系统"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "AnimeLoader Team", email = "animeloader@example.com"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+requires-python = ">=3.12"
+keywords = ["anime", "download", "rss", "torrent", "management"]
+
+dependencies = [
+    # Core dependencies
+    "sqlalchemy>=2.0.0",
+    "cmd2>=2.4.0",
+    "rich>=13.7.0",
+    "requests>=2.31.0",
+    "feedparser>=6.0.10",
+    "apscheduler>=3.10.0",
+    "pyyaml>=6.0.1",
+    "beautifulsoup4>=4.12.0",
+    "inquirer>=3.1.0",
+    "bencodepy>=0.9.0",
+    
+    # Optional dependencies for aria2
+    "aria2p>=0.11.0",
+    
+    # Optional dependencies for FastAPI (if REST API needed)
+    "fastapi>=0.109.0",
+    "uvicorn>=0.27.0",
+    "pydantic>=2.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "pyinstaller>=6.0.0",
+    # Include test dependencies
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+]
+test = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+]
+build = [
+    "pyinstaller>=6.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/insomniacdoll/animeloader"
+Repository = "https://github.com/insomniacdoll/animeloader.git"
+"Bug Tracker" = "https://github.com/insomniacdoll/animeloader/issues"
+
+[project.scripts]
+animeloader-server = "server.main:main"
+animeloader-client = "client.main:main"
+build-binaries = "build:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["server*", "client*", "docs*"]
+
+[tool.setuptools.package-data]
+server = ["**/*.py"]
+client = ["**/*.py"]
+docs = ["*.md"]
